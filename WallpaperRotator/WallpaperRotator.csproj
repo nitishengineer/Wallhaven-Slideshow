@@ -1,21 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net10.0-windows</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWindowsForms>true</UseWindowsForms>
+		<RollForward>Major</RollForward>
 	</PropertyGroup>
-
 	<PropertyGroup>
 		<ApplicationIcon>app.ico</ApplicationIcon>
-		<Version>1.0.0</Version>
-		<FileVersion>1.0.0.0</FileVersion>
-		<AssemblyTitle>Wallhaven Slideshow</AssemblyTitle>
+		<Version>1.1.0</Version>
+		<FileVersion>1.1.0.0</FileVersion>
+		<AssemblyTitle>Wallpaper Rotator</AssemblyTitle>
 		<Product>Wallhaven Slideshow</Product>
 		<Company>Nitish</Company>
 		<Description>Auto-rotating Wallhaven wallpapers for Windows</Description>
 	</PropertyGroup>
-
 </Project>

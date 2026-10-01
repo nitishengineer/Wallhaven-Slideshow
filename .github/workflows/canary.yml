@@ -1,0 +1,15 @@
+name: Future-compat canary
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'        # 1st of every month, 06:00 UTC
+  workflow_dispatch:            # manual "test the future" button
+
+jobs:
+  build-on-next-dotnet:
+    continue-on-error: true     # red canary = early warning, not a blocked pipeline
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build against the NEXT .NET TFM
+        run: dotnet build WallpaperRotator/WallpaperRotator.csproj -c Release -p:TargetFramework=net11.0-windows
