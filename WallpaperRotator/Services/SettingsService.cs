@@ -40,6 +40,9 @@ public class AppSettings
     public bool SolarScheduleEnabled { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+    public bool UpdateChecksEnabled { get; set; } = true;
+    public DateTime LastUpdateCheckUtc { get; set; }
+    public string SkippedVersion { get; set; } = "";
 }
 
 public static class SettingsService

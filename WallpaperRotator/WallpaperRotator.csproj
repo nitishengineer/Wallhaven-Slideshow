@@ -9,8 +9,8 @@
 	</PropertyGroup>
 	<PropertyGroup>
 		<ApplicationIcon>app.ico</ApplicationIcon>
-		<Version>1.1.0</Version>
-		<FileVersion>1.1.0.0</FileVersion>
+		<Version>1.2.0</Version>
+		<FileVersion>1.2.0.0</FileVersion>
 		<AssemblyTitle>Wallpaper Rotator</AssemblyTitle>
 		<Product>Wallhaven Slideshow</Product>
 		<Company>Nitish</Company>

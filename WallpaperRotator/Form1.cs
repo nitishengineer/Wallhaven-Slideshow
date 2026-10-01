@@ -424,6 +424,7 @@ public partial class Form1 : Form
                             $"solar={(_settings.SolarScheduleEnabled ? $"{_settings.Latitude},{_settings.Longitude}" : "off")} " +
                             $"cache={_settings.CacheMaxFiles}files/{_settings.CacheMaxMb}MB dark={_settings.DarkMode}");
             await RotateSafeAsync();
+            _ = CheckForUpdatesAsync();
         };
 
         if (Environment.GetCommandLineArgs().Contains("--silent"))
@@ -818,6 +819,7 @@ public partial class Form1 : Form
         menu.Items.Add("Logs", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 5; });
         menu.Items.Add("Open log", null, (s, e) =>
             Process.Start(new ProcessStartInfo(LogService.LogFilePath) { UseShellExecute = true }));
+        menu.Items.Add("Check for updates", null, async (s, e) => await CheckForUpdatesAsync(force: true));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, (s, e) => ExitApp());
         _trayIcon.ContextMenuStrip = menu;
@@ -1283,6 +1285,70 @@ public partial class Form1 : Form
         if (enable) key.SetValue(RunName, $"\"{Application.ExecutablePath}\" --silent");
         else key.DeleteValue(RunName, false);
     }
+
+    // ---------- Update check ----------
+    private async Task CheckForUpdatesAsync(bool force = false)
+    {
+        if (!_settings.UpdateChecksEnabled) return;
+
+        if (!force)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(15));   // let startup rotation settle first
+            if ((DateTime.UtcNow - _settings.LastUpdateCheckUtc).TotalHours < 12) return;
+        }
+
+        var info = await UpdateChecker.CheckAsync();
+        _settings.LastUpdateCheckUtc = DateTime.UtcNow;
+        SettingsService.Save(_settings);
+        LogService.Info($"Update check: latest={info?.Version ?? "none"} current={UpdateChecker.CurrentVersion}");
+
+        if (info is null)
+        {
+            if (force)
+                BeginInvoke(new Action(() => MessageBox.Show(this,
+                    "You're on the latest version.", "Wallpaper Rotator",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information)));
+            return;
+        }
+        if (info.Version == _settings.SkippedVersion && !force) return;
+
+        BeginInvoke(new Action(() => ShowUpdateDialog(info)));
+    }
+
+    private void ShowUpdateDialog(UpdateInfo info)
+    {
+        var download = new TaskDialogButton("Download now");
+        var later = new TaskDialogButton("Remind me later");
+        var skip = new TaskDialogButton("Skip this version");
+
+        var page = new TaskDialogPage
+        {
+            Caption = "Wallpaper Rotator",
+            Heading = $"Version {info.Version} is available (you have {UpdateChecker.CurrentVersion}).",
+            Text = string.IsNullOrWhiteSpace(info.Notes)
+                ? "See the release page for what's new."
+                : Truncate(info.Notes, 400),
+            Icon = TaskDialogIcon.Information,
+            SizeToContent = true,
+            Buttons = { download, later, skip }
+        };
+
+        var result = TaskDialog.ShowDialog(page);
+        if (result == download)
+        {
+            var url = info.DownloadUrl.Length > 0 ? info.DownloadUrl : info.ReleaseUrl;
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        else if (result == skip)
+        {
+            _settings.SkippedVersion = info.Version;
+            SettingsService.Save(_settings);
+        }
+        // "Remind me later": nothing saved — the next 12-hour check asks again
+    }
+
+    private static string Truncate(string s, int max) =>
+        s.Length <= max ? s : s[..max] + "…";
 
     // ---------- Window / tray ----------
     protected override void OnFormClosing(FormClosingEventArgs e)
