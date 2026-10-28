@@ -52,13 +52,13 @@ public class HistoryLogForm : Form
     {
         bool blocked = BlocklistService.IsBlocked(e.Id);
 
-        var row = new Panel
+        var row = new CardPanel
         {
             Height = 46,
             Margin = new Padding(3),
             Name = e.Id,
             Tag = "card",
-            BackColor = Theme.ControlBack,
+            BackColor = Theme.Card,
             ForeColor = Theme.Fore
         };
 
@@ -76,10 +76,10 @@ public class HistoryLogForm : Form
         var lblDate = new Label { Text = e.AppliedAt.ToString("yyyy-MM-dd  HH:mm"), Location = new Point(240, 14), AutoSize = true, BackColor = Color.Transparent, ForeColor = Theme.DisabledFore, Tag = "onCardDim" };
         var lblRes = new Label { Text = e.Resolution, Location = new Point(440, 14), AutoSize = true, BackColor = Color.Transparent, ForeColor = Theme.DisabledFore, Tag = "onCardDim" };
 
-        var btnSet = new Button { Text = "Set as Wallpaper", Size = new Size(120, 28), Location = new Point(500, 9) };
-        var btnBlock = new Button { Text = blocked ? "Unblock" : "🚫 Block", Size = new Size(80, 28), Location = new Point(626, 9) };
-        var btnCopy = new Button { Text = "Copy", Size = new Size(68, 28), Location = new Point(712, 9) };
-        var btnOpen = new Button { Text = "Open", Size = new Size(68, 28), Location = new Point(786, 9) };
+        var btnSet = new FluentButton { Text = "Set as Wallpaper", Icon = FluentGlyph.Photo, IconSize = 14, Size = new Size(130, 28), Location = new Point(490, 9) };
+        var btnBlock = new FluentButton { Text = blocked ? "Unblock" : "Block", Icon = blocked ? FluentGlyph.Check : FluentGlyph.Block, IconSize = 14, Size = new Size(92, 28), Location = new Point(628, 9) };
+        var btnCopy = new FluentButton { Text = "Copy", Size = new Size(68, 28), Location = new Point(726, 9) };
+        var btnOpen = new FluentButton { Text = "Open", Icon = FluentGlyph.Open, IconSize = 14, Size = new Size(72, 28), Location = new Point(800, 9) };
 
         Tips.For(btnSet, "Apply again — re-downloads first if the file is no longer cached.");
         Tips.For(btnBlock, "Block / unblock this wallpaper.");
@@ -122,10 +122,10 @@ public class HistoryLogForm : Form
             var buttons = row.Controls.OfType<Button>().ToList();
             if (buttons.Count == 4)
             {
-                buttons[0].Location = new Point(w - 344, 9);   // Set as Wallpaper
-                buttons[1].Location = new Point(w - 218, 9);   // Block/Unblock
-                buttons[2].Location = new Point(w - 132, 9);   // Copy
-                buttons[3].Location = new Point(w - 58, 9);    // Open
+                buttons[0].Location = new Point(w - 396, 9);   // Set as Wallpaper
+                buttons[1].Location = new Point(w - 258, 9);   // Block/Unblock
+                buttons[2].Location = new Point(w - 158, 9);   // Copy
+                buttons[3].Location = new Point(w - 82, 9);    // Open
             }
         }
     }
@@ -179,6 +179,8 @@ public class HistoryLogForm : Form
 
     public void RefreshList()
     {
+        int scrollY = Math.Max(0, -_flow.AutoScrollPosition.Y);
+
         _flow.SuspendLayout();
         while (_flow.Controls.Count > 0)
         {
@@ -197,5 +199,13 @@ public class HistoryLogForm : Form
         }
         _flow.ResumeLayout();
         FitRowWidths();
+        _flow.AutoScrollPosition = new Point(0, scrollY);   // keep the reader's place
     }
+
+    /// <summary>
+    /// Entries are newest-first, so the page should open at the top.  WinForms
+    /// restores the largest scroll offset while the tab is first made visible,
+    /// which used to leave the list pinned to the oldest entries.
+    /// </summary>
+    public void ScrollToTop() => _flow.AutoScrollPosition = new Point(0, 0);
 }

@@ -1,6 +1,6 @@
 # 🖼️ Wallhaven Slideshow
 
-A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [Wallhaven](https://wallhaven.cc) into an endless, smartly-filtered slideshow for your desktop. Search millions of wallpapers with deep filters, rotate on a schedule (or by real sunrise/sunset), protect favorites, block the misses, manage the cache, and give every monitor its own wallpaper — all from a themed tray-resident app.
+A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [Wallhaven](https://wallhaven.cc) into an endless, smartly-filtered slideshow for your desktop. Search millions of wallpapers with deep filters, rotate on a schedule (or by real sunrise/sunset), protect favorites, block the misses, manage the cache, and give every monitor its own wallpaper — all from a Fluent (Windows 11) tray-resident app.
 
 ![Screenshot](Screenshot.png)
 
@@ -14,7 +14,8 @@ A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [W
 - 🧠 **Smart history** — no-repeat memory with an adjustable cap (or *never repeat* mode), a full log tab with timestamps, and one-click **re-download** of pruned wallpapers
 - 🖥️ **Per-monitor wallpapers** — a different image on every screen via the COM `IDesktopWallpaper` interface
 - 📦 **Cache management** — file-count & MB caps with favorite-aware auto-prune, confirm-protected delete, Explorer shortcut
-- 🌙 **Dark & light themes** — fully owner-drawn WinForms theming, including native controls (dropdowns, spinners, list views, title bar)
+- 🪟 **Windows 11 Fluent UI** — Mica-style frame, rounded corners, DWM dark title bar, system accent colour, Segoe UI Variable, pill tabs with vector icons, rounded fields and buttons, animated toggle switches
+- 🌙 **Dark & light themes** — one-click 🌙/☀ switch; the palette, native dropdowns, list views, title bar and system chrome all follow the chosen mode
 - 🔌 **Offline resilience** — rotates from cache when the network or Wallhaven is down, with auto-retry + backoff on 5xx errors
 - 🗂️ **Collections** — rotate from your Wallhaven collections using a personal API key
 - 🧰 **Quality of life** — start with Windows, single instance, pause in fullscreen, six-tab UI, diagnostics log tab, tooltips on every option
@@ -25,7 +26,8 @@ A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [W
 - Wallhaven REST API (search, collections, wallpaper info)
 - Win32 interop: `SystemParametersInfo` (wallpaper), COM `IDesktopWallpaper` (multi-monitor), `uxtheme` + DWM (dark mode), Registry (fit modes & autostart)
 - `System.Text.Json` persistence (settings, history, blocklist) in `%LOCALAPPDATA%\WallpaperRotator`
-- Owner-drawn UI: themed tabs, card lists, color swatches, tooltips, self-painting controls
+- Owner-drawn UI: Fluent pill tabs, rounded buttons/fields, animated toggles, a custom combo popup, card lists, color swatches and tooltips
+- DWM interop: Mica backdrop, rounded corners, immersive dark title bar, themed border; `Application.SetColorMode` for native dark-mode pieces
 
 ## 🚀 Run it locally
 
@@ -34,7 +36,7 @@ git clone https://github.com/nitishengineer/Wallhaven-Slideshow.git
 cd Wallhaven-Slideshow
 ```
 
-Open `WallpaperRotator.sln` in **Visual Studio 2022+** and press **F5** — or from a terminal:
+Open `WallpaperRotator.slnx` in **Visual Studio 2022+** and press **F5** — or from a terminal:
 
 ```
 dotnet run --project WallpaperRotator
@@ -58,9 +60,17 @@ WallpaperRotator/
 ├── HistoryLogForm.cs      # History tab — full rotation log with re-download
 ├── BlockedForm.cs         # Blocked tab — "never again" list with Unblock
 ├── LogsForm.cs            # Logs tab — live diagnostics viewer
-├── DarkTabControl.cs      # borderless, theme-aware TabControl
 ├── ThemeToggleButton.cs   # self-painting 🌙/☀ switch on the tab strip
-├── Theme.cs / Tooltips.cs # dark-light palette + native theming / hover help
+├── Theme.cs               # Fluent palette, fonts, DWM chrome, native theming
+├── Tooltips.cs            # owner-drawn hover help
+├── Ui/                    # Fluent controls
+│   ├── FluentButton.cs        # rounded standard / accent / subtle / danger buttons
+│   ├── FluentTabControl.cs    # pill tabs with vector icons
+│   ├── FluentToggleSwitch.cs  # animated Windows 11 toggle
+│   ├── FluentField.cs         # rounded text fields + numeric editor
+│   ├── FluentComboBox.cs      # rounded combo + themed popup
+│   ├── FluentGlyph.cs         # vector icon painter (no icon font)
+│   └── FluentSurfaces.cs      # rounded cards / picture boxes
 ├── Models/
 │   └── WallhavenModels.cs # API JSON contracts
 ├── Services/
@@ -85,6 +95,7 @@ What began as *"can I rotate Wallhaven wallpapers with a small script?"* grew in
 - Win32 interop from C#: P/Invoke, COM vtables, registry theming, DWM dark title bars
 - Designing a resilient network pipeline: page clamping, retry with backoff, offline cache fallback
 - Owner-drawing standard WinForms controls to build a coherent dark/light theme
+- Building a Fluent (Windows 11) look in pure WinForms: DWM Mica/rounded chrome, system accent colour, animated toggles, pill tabs and a custom combo popup
 - Event-driven state sync across six embedded tab views (favorites, blocks, applies)
 - The full product loop: idea → feature → manual QA → published exe → Git/GitHub workflow
 

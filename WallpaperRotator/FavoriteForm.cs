@@ -10,6 +10,9 @@ public class FavoriteForm : Form
     private readonly ListView _list = new();
     private readonly ImageList _thumbs = new();
     private readonly List<HistoryEntry> _shown = new();
+    private FluentButton _setBtn = null!;
+    private FluentButton _viewBtn = null!;
+    private FluentButton _unfavBtn = null!;
     private readonly Label _statusLabel = new();
 
     public event Action<string>? StatusChanged;
@@ -20,19 +23,20 @@ public class FavoriteForm : Form
     {
         ClientSize = new Size(960, 570);   // MUST stay the first line (anchor snapshot rule)
 
-        _thumbs.ImageSize = new Size(150, 90);
+        _thumbs.ImageSize = new Size(146, 88);
         _thumbs.ColorDepth = ColorDepth.Depth32Bit;
 
         _list.Location = new Point(12, 12);
         _list.Size = new Size(936, 500);
-        _list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        _list.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         _list.View = View.LargeIcon;
         _list.LargeImageList = _thumbs;
         _list.MultiSelect = false;
         _list.HideSelection = false;
         Controls.Add(_list);
 
-        var setBtn = new Button { Text = "Set again", Location = new Point(12, 524), Size = new Size(110, 34) };
+        var setBtn = new FluentButton { Text = "Set again", Icon = FluentGlyph.Photo, Location = new Point(12, 524), Size = new Size(110, 34) };
+        _setBtn = setBtn;
         setBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         setBtn.Click += (s, e) =>
         {
@@ -45,7 +49,8 @@ public class FavoriteForm : Form
             RefreshList();
         };
 
-        var viewBtn = new Button { Text = "View in Wallhaven", Location = new Point(132, 524), Size = new Size(150, 34) };
+        var viewBtn = new FluentButton { Text = "View in Wallhaven", Icon = FluentGlyph.Open, Location = new Point(132, 524), Size = new Size(158, 34) };
+        _viewBtn = viewBtn;
         viewBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         viewBtn.Click += (s, e) =>
         {
@@ -54,7 +59,8 @@ public class FavoriteForm : Form
             Process.Start(new ProcessStartInfo($"https://wallhaven.cc/w/{sel.Id}") { UseShellExecute = true });
         };
 
-        var unfavBtn = new Button { Text = "Unfavorite", Location = new Point(292, 524), Size = new Size(110, 34) };
+        var unfavBtn = new FluentButton { Text = "Unfavorite", Icon = FluentGlyph.StarFilled, Location = new Point(302, 524), Size = new Size(120, 34) };
+        _unfavBtn = unfavBtn;
         unfavBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         unfavBtn.Click += (s, e) =>
         {
@@ -67,8 +73,8 @@ public class FavoriteForm : Form
             RefreshList();
         };
 
-        _statusLabel.Location = new Point(412, 524);
-        _statusLabel.Size = new Size(536, 34);
+        _statusLabel.Location = new Point(432, 524);
+        _statusLabel.Size = new Size(516, 34);
         _statusLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
         _statusLabel.TextAlign = ContentAlignment.MiddleRight;
         _statusLabel.Text = "";
@@ -80,6 +86,22 @@ public class FavoriteForm : Form
         setBtn.BringToFront();
         viewBtn.BringToFront();
         unfavBtn.BringToFront();
+
+        _list.SelectedIndexChanged += (s, e) => UpdateSelectionButtons();
+
+        void LayoutBottom()
+        {
+            int y = Math.Max(12, ClientSize.Height - 46);
+            _list.SetBounds(12, 12, Math.Max(120, ClientSize.Width - 24), Math.Max(60, y - 24));
+
+            setBtn.Location = new Point(12, y);
+            viewBtn.Location = new Point(130, y);
+            unfavBtn.Location = new Point(296, y);
+            _statusLabel.SetBounds(424, y, Math.Max(100, ClientSize.Width - 436), 34);
+        }
+
+        Resize += (s, e) => LayoutBottom();
+        LayoutBottom();
 
         Tips.For(setBtn, "Set the selected favorite as your desktop wallpaper now.");
         Tips.For(viewBtn, "Open the selected wallpaper's Wallhaven page.");
@@ -98,6 +120,14 @@ public class FavoriteForm : Form
     private HistoryEntry? Selected() =>
         _list.SelectedIndices.Count == 1 ? _shown[_list.SelectedIndices[0]] : null;
 
+    private void UpdateSelectionButtons()
+    {
+        bool has = _list.SelectedIndices.Count == 1;
+        _setBtn.Enabled = has;
+        _viewBtn.Enabled = has;
+        _unfavBtn.Enabled = has;
+    }
+
     public void RefreshList()
     {
         _list.Items.Clear();
@@ -108,12 +138,15 @@ public class FavoriteForm : Form
         {
             if (!e.Favorite || !File.Exists(e.FilePath)) continue;
 
-            try { _thumbs.Images.Add(MakeThumb(e.FilePath, 150, 90)); }
+            try { _thumbs.Images.Add(MakeThumb(e.FilePath, 146, 88)); }
             catch { continue; }
 
             _list.Items.Add(new ListViewItem(e.Id) { ImageIndex = _shown.Count });
             _shown.Add(e);
         }
+        UpdateSelectionButtons();
+        if (_list.IsHandleCreated && _list.Items.Count > 0)
+            _list.EnsureVisible(0);
     }
 
     private static Bitmap MakeThumb(string path, int w, int h)

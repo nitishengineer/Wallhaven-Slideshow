@@ -17,7 +17,7 @@ public partial class Form1 : Form
     private ToolStripMenuItem _pauseItem = new();
     private ToolStripMenuItem _multiItem = new();
 
-    private readonly DarkTabControl _tabs = new();
+    private readonly FluentTabControl _tabs = new();
     private readonly TabPage _rotatePage = new("Rotate");
     private readonly TabPage _cachePage = new("Cache");
     private readonly TabPage _favoritePage = new("Favorite");
@@ -67,60 +67,60 @@ public partial class Form1 : Form
     private static readonly int[] PageCaps = { 10, 20, 30, 40, 50 };
 
     // ----- Rotate tab: left column -----
-    private readonly PictureBox _preview = new();
-    private readonly Button _viewBtn = new();
-    private readonly Button _favBtn = new();
-    private readonly Button _blockBtn = new();
+    private readonly RoundedPictureBox _preview = new();
+    private readonly FluentButton _viewBtn = new();
+    private readonly FluentButton _favBtn = new();
+    private readonly FluentButton _blockBtn = new();
     private readonly Label _currentLabel = new();
-    private readonly Button _nextBtn = new();
-    private readonly CheckBox _pauseBox = new();
-    private readonly CheckBox _autostartBox = new();
-    private readonly CheckBox _multiBox = new();
-    private readonly CheckBox _fullscreenBox = new();
-    private readonly CheckBox _offlineBox = new();
-    private readonly CheckBox _pruneBox = new();
-    private readonly NumericUpDown _maxFilesBox = new();
-    private readonly NumericUpDown _maxMbBox = new();
+    private readonly FluentButton _nextBtn = new();
+    private readonly FluentToggleSwitch _pauseBox = new();
+    private readonly FluentToggleSwitch _autostartBox = new();
+    private readonly FluentToggleSwitch _multiBox = new();
+    private readonly FluentToggleSwitch _fullscreenBox = new();
+    private readonly FluentToggleSwitch _offlineBox = new();
+    private readonly FluentToggleSwitch _pruneBox = new();
+    private readonly FluentNumberBox _maxFilesBox = new();
+    private readonly FluentNumberBox _maxMbBox = new();
     private readonly Label _filesOrLabel = new();
     private readonly Label _mbLabel = new();
-    private readonly CheckBox _historyCapBox = new();
-    private readonly NumericUpDown _historyCapValue = new();
-    private readonly CheckBox _boostBox = new();
-    private readonly NumericUpDown _boostValue = new();
+    private readonly FluentToggleSwitch _historyCapBox = new();
+    private readonly FluentNumberBox _historyCapValue = new();
+    private readonly FluentToggleSwitch _boostBox = new();
+    private readonly FluentNumberBox _boostValue = new();
     private readonly Label _pctLabel = new();
-    private readonly CheckBox _scheduleBox = new();
-    private readonly CheckBox _solarBox = new();
-    private readonly NumericUpDown _latBox = new();
-    private readonly NumericUpDown _lonBox = new();
+    private readonly FluentToggleSwitch _scheduleBox = new();
+    private readonly FluentToggleSwitch _solarBox = new();
+    private readonly FluentNumberBox _latBox = new();
+    private readonly FluentNumberBox _lonBox = new();
     private readonly Label _morningLabel = new();
     private readonly Label _afternoonLabel = new();
     private readonly Label _eveningLabel = new();
     private readonly Label _nightLabel = new();
-    private readonly TextBox _morningBox = new();
-    private readonly TextBox _afternoonBox = new();
-    private readonly TextBox _eveningBox = new();
-    private readonly TextBox _nightBox = new();
+    private readonly FluentTextBox _morningBox = new();
+    private readonly FluentTextBox _afternoonBox = new();
+    private readonly FluentTextBox _eveningBox = new();
+    private readonly FluentTextBox _nightBox = new();
     private readonly Label _statusLabel = new();
     private readonly List<Control> _scheduleControls = new();
 
     // ----- Rotate tab: right column -----
-    private readonly ComboBox _tagBox = new();
-    private readonly CheckBox _generalBox = new();
-    private readonly CheckBox _animeBox = new();
-    private readonly CheckBox _peopleBox = new();
-    private readonly CheckBox _sketchyBox = new();
-    private readonly ComboBox _intervalBox = new();
-    private readonly ComboBox _orderBox = new();
-    private readonly ComboBox _fitBox = new();
-    private readonly CheckBox _matchScreenBox = new();
-    private readonly NumericUpDown _minWBox = new();
-    private readonly NumericUpDown _minHBox = new();
-    private readonly ComboBox _resModeBox = new();
-    private readonly ComboBox _ratioBox = new();
-    private readonly ComboBox _colorBox = new();
-    private readonly ComboBox _pageCapBox = new();
-    private readonly TextBox _keyBox = new();
-    private readonly ComboBox _collectionBox = new();
+    private readonly FluentComboBox _tagBox = new();
+    private readonly FluentToggleSwitch _generalBox = new();
+    private readonly FluentToggleSwitch _animeBox = new();
+    private readonly FluentToggleSwitch _peopleBox = new();
+    private readonly FluentToggleSwitch _sketchyBox = new();
+    private readonly FluentComboBox _intervalBox = new();
+    private readonly FluentComboBox _orderBox = new();
+    private readonly FluentComboBox _fitBox = new();
+    private readonly FluentToggleSwitch _matchScreenBox = new();
+    private readonly FluentNumberBox _minWBox = new();
+    private readonly FluentNumberBox _minHBox = new();
+    private readonly FluentComboBox _resModeBox = new();
+    private readonly FluentComboBox _ratioBox = new();
+    private readonly FluentComboBox _colorBox = new();
+    private readonly FluentComboBox _pageCapBox = new();
+    private readonly FluentTextBox _keyBox = new();
+    private readonly FluentComboBox _collectionBox = new();
     private readonly ThemeToggleButton _themeBtn = new();
     private readonly List<(int Id, string Label)> _collections = new();
 
@@ -150,34 +150,58 @@ public partial class Form1 : Form
 
         // ----- tabs -----
         _tabs.Dock = DockStyle.Fill;
-        _tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
-        _tabs.Padding = new Point(12, 8);
         _tabs.TabPages.Add(_rotatePage);
         _tabs.TabPages.Add(_cachePage);
         _tabs.TabPages.Add(_favoritePage);
         _tabs.TabPages.Add(_historyLogPage);
         _tabs.TabPages.Add(_blockedPage);
         _tabs.TabPages.Add(_logsPage);
-        _tabs.DrawItem += DrawTabItem;
         _tabs.SelectedIndexChanged += (s, e) =>
         {
             if (_tabs.SelectedIndex == 1) _cacheEmbed.RefreshList();
             else if (_tabs.SelectedIndex == 2) _favoriteEmbed.RefreshList();
-            else if (_tabs.SelectedIndex == 3) _historyLogEmbed.RefreshList();
-            else if (_tabs.SelectedIndex == 4) _blockedEmbed.RefreshList();
+            else if (_tabs.SelectedIndex == 3) { _historyLogEmbed.RefreshList(); _historyLogEmbed.ScrollToTop(); }
+            else if (_tabs.SelectedIndex == 4) { _blockedEmbed.RefreshList(); _blockedEmbed.ScrollToTop(); }
             else if (_tabs.SelectedIndex == 5) _logsEmbed.RefreshList();
         };
         Controls.Add(_tabs);
 
         // Theme toggle floats on the empty right side of the tab strip
-        _themeBtn.Size = new Size(32, 28);
-        _themeBtn.Location = new Point(952, 4);
-        _themeBtn.FlatStyle = FlatStyle.Flat;
-        _themeBtn.FlatAppearance.BorderSize = 0;
-        _themeBtn.Font = new Font("Segoe UI Emoji", 12F);
+        _themeBtn.Size = new Size(32, 30);
+        _themeBtn.Location = new Point(952, 5);
         _themeBtn.TabStop = false;
         Controls.Add(_themeBtn);
         _themeBtn.BringToFront();
+
+        // The native TabControl paints a 1px light 3-D highlight on the inner
+        // edge of its border.  It is invisible in light mode but shows up as a
+        // bright hairline against the dark background - and it flashes on every
+        // repaint.  Mask all four outer strips with the page colour so no native
+        // chrome can leak through.
+        var edgeTop = new Panel { Height = 2, TabStop = false, BackColor = Theme.Back };
+        var edgeBottom = new Panel { Height = 2, TabStop = false, BackColor = Theme.Back };
+        var edgeLeft = new Panel { Width = 2, TabStop = false, BackColor = Theme.Back };
+        var edgeRight = new Panel { Width = 4, TabStop = false, BackColor = Theme.Back };
+        var edgeMasks = new[] { edgeTop, edgeBottom, edgeLeft, edgeRight };
+        foreach (var edge in edgeMasks)
+        {
+            Controls.Add(edge);
+            edge.BringToFront();
+        }
+        void PlaceEdgeMasks()
+        {
+            int w = ClientSize.Width;
+            int h = ClientSize.Height;
+            edgeTop.SetBounds(0, 0, w, 2);
+            edgeBottom.SetBounds(0, h - 2, w, 2);
+            edgeLeft.SetBounds(0, 0, 2, h);
+            edgeRight.SetBounds(w - 4, 0, 4, h);
+
+            foreach (var edge in edgeMasks)
+                edge.BringToFront();
+        }
+        ClientSizeChanged += (s, e) => PlaceEdgeMasks();
+        PlaceEdgeMasks();
 
         // ----- embedded Cache tab -----
         _cacheEmbed.TopLevel = false;
@@ -288,7 +312,6 @@ public partial class Form1 : Form
         CreateControl();
         Theme.Init(_settings.DarkMode);
         Theme.Apply(this);
-        Theme.ApplyTabControlBorder(_tabs);
         UpdateThemeButton();
         UpdateCacheEnabled();
         UpdateCapEnabled();
@@ -388,6 +411,13 @@ public partial class Form1 : Form
         };
         _themeBtn.Click += (s, e) =>
         {
+            // Freeze painting and hide the client behind a snapshot of the old
+            // theme while every control is recoloured, then reveal the fully
+            // repainted window.  This keeps the switch atomic instead of showing
+            // new page colours behind old fields for a frame or two.
+            using var cover = Theme.CoverForThemeChange(this);
+            using var redraw = Theme.SuspendRedraw(this);
+
             Theme.Toggle();
             Theme.Apply(this);
             _tabs.Invalidate(true);
@@ -440,64 +470,67 @@ public partial class Form1 : Form
 
         // ================= LEFT COLUMN =================
         _preview.Size = new Size(440, 250);
-        _preview.Location = new Point(pad, 20);
-        _preview.SizeMode = PictureBoxSizeMode.Zoom;
-        _preview.BorderStyle = BorderStyle.FixedSingle;
+        _preview.Location = new Point(pad, 16);
+        _preview.CornerRadius = 8;
         _rotatePage.Controls.Add(_preview);
 
         _viewBtn.Text = "View in Wallhaven";
+        _viewBtn.Icon = FluentGlyph.Photo;
         _viewBtn.Location = new Point(pad, 280);
-        _viewBtn.Size = new Size(150, 30);
+        _viewBtn.Size = new Size(158, 32);
         _viewBtn.Enabled = false;
         _rotatePage.Controls.Add(_viewBtn);
 
-        _favBtn.Location = new Point(178, 280);
-        _favBtn.Size = new Size(50, 30);
-        _favBtn.Text = "☆";
-        _favBtn.Font = new Font("Segoe UI", 12F);
+        _favBtn.Location = new Point(186, 280);
+        _favBtn.Size = new Size(46, 32);
+        _favBtn.Icon = FluentGlyph.Star;
         _favBtn.Enabled = false;
         _rotatePage.Controls.Add(_favBtn);
 
-        _blockBtn.Location = new Point(234, 280);
-        _blockBtn.Size = new Size(50, 30);
-        _blockBtn.Text = "🚫";
-        _blockBtn.Font = new Font("Segoe UI Emoji", 11F);
+        _blockBtn.Location = new Point(238, 280);
+        _blockBtn.Size = new Size(46, 32);
+        _blockBtn.Icon = FluentGlyph.Block;
         _blockBtn.Enabled = false;
         _rotatePage.Controls.Add(_blockBtn);
 
-        _currentLabel.Location = new Point(292, 284);
-        _currentLabel.Size = new Size(168, 24);
+        _currentLabel.Location = new Point(294, 280);
+        _currentLabel.Size = new Size(166, 32);
+        _currentLabel.Tag = "caption";
         _currentLabel.TextAlign = ContentAlignment.MiddleLeft;
+        _currentLabel.AutoEllipsis = true;
         _currentLabel.Text = "(no wallpaper yet)";
         _rotatePage.Controls.Add(_currentLabel);
 
         _nextBtn.Text = "Next now";
-        _nextBtn.Tag = "accent";
-        _nextBtn.Location = new Point(pad, 320);
-        _nextBtn.Size = new Size(440, 36);
+        _nextBtn.Icon = FluentGlyph.Refresh;
+        _nextBtn.Variant = FluentButtonVariant.Accent;
+        _nextBtn.Bold = true;
+        _nextBtn.Location = new Point(pad, 322);
+        _nextBtn.Size = new Size(440, 38);
         _nextBtn.Click += async (s, e) => await RotateSafeAsync();
         _rotatePage.Controls.Add(_nextBtn);
 
         // Toggles: per-monitor top-left, auto-prune bottom-left, pause bottom-right
-        _multiBox.Text = "Per-monitor"; _multiBox.Location = new Point(pad, 370); _multiBox.AutoSize = true;
-        _autostartBox.Text = "Start with Windows"; _autostartBox.Location = new Point(pad, 396); _autostartBox.AutoSize = true;
-        _pruneBox.Text = "Auto-prune cache"; _pruneBox.Location = new Point(pad, 422); _pruneBox.AutoSize = true;
-        _fullscreenBox.Text = "Pause in fullscreen"; _fullscreenBox.Location = new Point(240, 370); _fullscreenBox.AutoSize = true;
-        _offlineBox.Text = "Pause downloads"; _offlineBox.Location = new Point(240, 396); _offlineBox.AutoSize = true;
-        _pauseBox.Text = "Pause rotation"; _pauseBox.Location = new Point(240, 422); _pauseBox.AutoSize = true;
+        _multiBox.Text = "Per-monitor"; _multiBox.Location = new Point(pad, 374); _multiBox.AutoSize = true;
+        _autostartBox.Text = "Start with Windows"; _autostartBox.Location = new Point(pad, 400); _autostartBox.AutoSize = true;
+        _pruneBox.Text = "Auto-prune cache"; _pruneBox.Location = new Point(pad, 426); _pruneBox.AutoSize = true;
+        _fullscreenBox.Text = "Pause in fullscreen"; _fullscreenBox.Location = new Point(244, 374); _fullscreenBox.AutoSize = true;
+        _offlineBox.Text = "Pause downloads"; _offlineBox.Location = new Point(244, 400); _offlineBox.AutoSize = true;
+        _pauseBox.Text = "Pause rotation"; _pauseBox.Location = new Point(244, 426); _pauseBox.AutoSize = true;
         _rotatePage.Controls.AddRange(new Control[] { _pauseBox, _autostartBox, _multiBox, _fullscreenBox, _offlineBox, _pruneBox });
 
-        _maxFilesBox.Location = new Point(pad, 450);
-        _maxFilesBox.Width = 80;
+        _maxFilesBox.Location = new Point(pad, 452);
+        _maxFilesBox.Width = 84;
         _maxFilesBox.Minimum = 2;
         _maxFilesBox.Maximum = 10000;
         _maxFilesBox.Value = 200;
         _rotatePage.Controls.Add(_maxFilesBox);
-        _filesOrLabel.Text = "files  or";
-        _filesOrLabel.Location = new Point(106, 453);
+        _filesOrLabel.Text = "files   or";
+        _filesOrLabel.Tag = "caption";
+        _filesOrLabel.Location = new Point(112, 458);
         _filesOrLabel.AutoSize = true;
         _rotatePage.Controls.Add(_filesOrLabel);
-        _maxMbBox.Location = new Point(162, 450);
+        _maxMbBox.Location = new Point(176, 452);
         _maxMbBox.Width = 96;
         _maxMbBox.Minimum = 50;
         _maxMbBox.Maximum = 102400;
@@ -505,15 +538,16 @@ public partial class Form1 : Form
         _maxMbBox.Value = 2048;
         _rotatePage.Controls.Add(_maxMbBox);
         _mbLabel.Text = "MB";
-        _mbLabel.Location = new Point(264, 453);
+        _mbLabel.Tag = "caption";
+        _mbLabel.Location = new Point(278, 458);
         _mbLabel.AutoSize = true;
         _rotatePage.Controls.Add(_mbLabel);
 
         _historyCapBox.Text = "History cap";
-        _historyCapBox.Location = new Point(pad, 484);
+        _historyCapBox.Location = new Point(pad, 490);
         _historyCapBox.AutoSize = true;
         _rotatePage.Controls.Add(_historyCapBox);
-        _historyCapValue.Location = new Point(150, 482);
+        _historyCapValue.Location = new Point(150, 486);
         _historyCapValue.Width = 90;
         _historyCapValue.Minimum = 10;
         _historyCapValue.Maximum = 100000;
@@ -522,40 +556,41 @@ public partial class Form1 : Form
         _rotatePage.Controls.Add(_historyCapValue);
 
         _boostBox.Text = "Favorite boost";
-        _boostBox.Location = new Point(pad, 514);
+        _boostBox.Location = new Point(pad, 522);
         _boostBox.AutoSize = true;
         _rotatePage.Controls.Add(_boostBox);
-        _boostValue.Location = new Point(150, 512);
-        _boostValue.Width = 60;
+        _boostValue.Location = new Point(150, 518);
+        _boostValue.Width = 64;
         _boostValue.Minimum = 1;
         _boostValue.Maximum = 100;
         _boostValue.Value = 30;
         _rotatePage.Controls.Add(_boostValue);
         _pctLabel.Text = "%";
-        _pctLabel.Location = new Point(215, 515);
+        _pctLabel.Tag = "caption";
+        _pctLabel.Location = new Point(220, 524);
         _pctLabel.AutoSize = true;
         _rotatePage.Controls.Add(_pctLabel);
 
-        _scheduleBox.Text = "Time-of-day schedule:";
-        _scheduleBox.Location = new Point(pad, 544);
+        _scheduleBox.Text = "Time-of-day schedule";
+        _scheduleBox.Location = new Point(pad, 558);
         _scheduleBox.AutoSize = true;
         _rotatePage.Controls.Add(_scheduleBox);
 
         _solarBox.Text = "Use sunrise/sunset";
-        _solarBox.Location = new Point(pad, 570);
+        _solarBox.Location = new Point(pad, 584);
         _solarBox.AutoSize = true;
         _rotatePage.Controls.Add(_solarBox);
-        var latLabel = new Label { Text = "Lat", Location = new Point(170, 573), AutoSize = true };
-        var lonLabel = new Label { Text = "Lon", Location = new Point(280, 573), AutoSize = true };
-        _latBox.Location = new Point(195, 570);
-        _latBox.Width = 65;
+        var latLabel = new Label { Text = "Lat", Location = new Point(184, 590), AutoSize = true, Tag = "caption" };
+        var lonLabel = new Label { Text = "Lon", Location = new Point(306, 590), AutoSize = true, Tag = "caption" };
+        _latBox.Location = new Point(220, 584);
+        _latBox.Width = 74;
         _latBox.Minimum = -90;
         _latBox.Maximum = 90;
         _latBox.DecimalPlaces = 2;
         _latBox.Increment = 0.25m;
         _rotatePage.Controls.Add(_latBox);
-        _lonBox.Location = new Point(310, 570);
-        _lonBox.Width = 65;
+        _lonBox.Location = new Point(348, 584);
+        _lonBox.Width = 74;
         _lonBox.Minimum = -180;
         _lonBox.Maximum = 180;
         _lonBox.DecimalPlaces = 2;
@@ -563,17 +598,21 @@ public partial class Form1 : Form
         _rotatePage.Controls.Add(_lonBox);
 
         _morningLabel.AutoSize = true;
-        _morningLabel.Location = new Point(pad, 596);
+        _morningLabel.Tag = "caption";
+        _morningLabel.Location = new Point(pad, 620);
         _afternoonLabel.AutoSize = true;
-        _afternoonLabel.Location = new Point(240, 596);
-        _morningBox.Location = new Point(pad, 618); _morningBox.Width = 210;
-        _afternoonBox.Location = new Point(240, 618); _afternoonBox.Width = 210;
+        _afternoonLabel.Tag = "caption";
+        _afternoonLabel.Location = new Point(244, 620);
+        _morningBox.Location = new Point(pad, 640); _morningBox.Width = 214;
+        _afternoonBox.Location = new Point(244, 640); _afternoonBox.Width = 214;
         _eveningLabel.AutoSize = true;
-        _eveningLabel.Location = new Point(pad, 652);
+        _eveningLabel.Tag = "caption";
+        _eveningLabel.Location = new Point(pad, 676);
         _nightLabel.AutoSize = true;
-        _nightLabel.Location = new Point(240, 652);
-        _eveningBox.Location = new Point(pad, 674); _eveningBox.Width = 210;
-        _nightBox.Location = new Point(240, 674); _nightBox.Width = 210;
+        _nightLabel.Tag = "caption";
+        _nightLabel.Location = new Point(244, 676);
+        _eveningBox.Location = new Point(pad, 696); _eveningBox.Width = 214;
+        _nightBox.Location = new Point(244, 696); _nightBox.Width = 214;
         _scheduleControls.AddRange(new Control[]
         {
             _solarBox, latLabel, _latBox, lonLabel, _lonBox,
@@ -582,105 +621,117 @@ public partial class Form1 : Form
         });
         _rotatePage.Controls.AddRange(_scheduleControls.ToArray());
 
-        _statusLabel.Location = new Point(pad, 710);
-        _statusLabel.Size = new Size(440, 68);
+        _statusLabel.Location = new Point(pad, 734);
+        _statusLabel.Size = new Size(440, 76);
+        _statusLabel.Tag = "status";
+        _statusLabel.Padding = new Padding(14, 10, 14, 10);
+        _statusLabel.Text = "";
+        _statusLabel.AutoEllipsis = true;
         _rotatePage.Controls.Add(_statusLabel);
+        _rotatePage.Paint += (s, e) => Theme.PaintCard(e.Graphics, _statusLabel.Bounds, 8);
 
         // ================= RIGHT COLUMN =================
-        _rotatePage.Controls.Add(new Label { Text = "Category", Location = new Point(c2, 20), AutoSize = true });
-        _tagBox.Location = new Point(c2, 42);
+        _rotatePage.Controls.Add(Caption("Category", c2, 16));
+        _tagBox.Location = new Point(c2, 38);
         _tagBox.Width = 480;
         _tagBox.Items.AddRange(new object[] { "abstract", "nature", "cyberpunk", "minimalist", "space", "fantasy", "anime", "cars", "avengers" });
         _rotatePage.Controls.Add(_tagBox);
 
-        _generalBox.Text = "General"; _generalBox.Location = new Point(c2, 74); _generalBox.AutoSize = true;
-        _animeBox.Text = "Anime"; _animeBox.Location = new Point(c2 + 80, 74); _animeBox.AutoSize = true;
-        _peopleBox.Text = "People"; _peopleBox.Location = new Point(c2 + 150, 74); _peopleBox.AutoSize = true;
-        _sketchyBox.Text = "Sketchy"; _sketchyBox.Location = new Point(c2 + 220, 74); _sketchyBox.AutoSize = true;
+        _generalBox.Text = "General"; _generalBox.Location = new Point(c2, 78); _generalBox.AutoSize = true;
+        _animeBox.Text = "Anime"; _animeBox.Location = new Point(c2 + 120, 78); _animeBox.AutoSize = true;
+        _peopleBox.Text = "People"; _peopleBox.Location = new Point(c2 + 224, 78); _peopleBox.AutoSize = true;
+        _sketchyBox.Text = "Sketchy"; _sketchyBox.Location = new Point(c2 + 326, 78); _sketchyBox.AutoSize = true;
         _rotatePage.Controls.AddRange(new Control[] { _generalBox, _animeBox, _peopleBox, _sketchyBox });
 
-        _rotatePage.Controls.Add(new Label { Text = "Change every", Location = new Point(c2, 110), AutoSize = true });
-        _intervalBox.Location = new Point(c2, 132);
+        _rotatePage.Controls.Add(Caption("Change every", c2, 114));
+        _intervalBox.Location = new Point(c2, 136);
         _intervalBox.Width = cw;
         _intervalBox.DropDownStyle = ComboBoxStyle.DropDownList;
         foreach (var i in _intervals) _intervalBox.Items.Add(i.Label);
         _rotatePage.Controls.Add(_intervalBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Source order", Location = new Point(740, 110), AutoSize = true });
-        _orderBox.Location = new Point(740, 132);
+        _rotatePage.Controls.Add(Caption("Source order", 740, 114));
+        _orderBox.Location = new Point(740, 136);
         _orderBox.Width = cw;
         _orderBox.DropDownStyle = ComboBoxStyle.DropDownList;
         _rotatePage.Controls.Add(_orderBox);
 
         // Resolution group: values + match mode + screen-match on one line
-        _rotatePage.Controls.Add(new Label { Text = "Resolution", Location = new Point(c2, 170), AutoSize = true });
-        _minWBox.Location = new Point(c2, 192);
+        _rotatePage.Controls.Add(Caption("Resolution", c2, 178));
+        _minWBox.Location = new Point(c2, 200);
         _minWBox.Width = 100;
         _minWBox.Minimum = 640; _minWBox.Maximum = 7680; _minWBox.Value = 1920;
         _rotatePage.Controls.Add(_minWBox);
-        _minHBox.Location = new Point(608, 192);
+        _minHBox.Location = new Point(608, 200);
         _minHBox.Width = 100;
         _minHBox.Minimum = 480; _minHBox.Maximum = 4320; _minHBox.Value = 1080;
         _rotatePage.Controls.Add(_minHBox);
-        _resModeBox.Location = new Point(730, 192);
-        _resModeBox.Width = 120;
+        _resModeBox.Location = new Point(730, 200);
+        _resModeBox.Width = 90;
         _resModeBox.DropDownStyle = ComboBoxStyle.DropDownList;
         _resModeBox.Items.Add("At least");
         _resModeBox.Items.Add("Exactly");
         _rotatePage.Controls.Add(_resModeBox);
-        _matchScreenBox.Text = "Match my screen";
-        _matchScreenBox.Location = new Point(860, 194);
+        _matchScreenBox.Text = "Match screen";
+        _matchScreenBox.Location = new Point(828, 204);
         _matchScreenBox.AutoSize = true;
         _rotatePage.Controls.Add(_matchScreenBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Ratio", Location = new Point(c2, 230), AutoSize = true });
-        _ratioBox.Location = new Point(c2, 252);
+        _rotatePage.Controls.Add(Caption("Ratio", c2, 242));
+        _ratioBox.Location = new Point(c2, 264);
         _ratioBox.Width = cw;
         _ratioBox.DropDownStyle = ComboBoxStyle.DropDownList;
         _ratioBox.Items.Add("Any ratio");
         for (int i = 1; i < Ratios.Length; i++) _ratioBox.Items.Add(Ratios[i].Replace('x', ':'));
         _rotatePage.Controls.Add(_ratioBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Color", Location = new Point(740, 230), AutoSize = true });
-        _colorBox.Location = new Point(740, 252);
+        _rotatePage.Controls.Add(Caption("Color", 740, 242));
+        _colorBox.Location = new Point(740, 264);
         _colorBox.Width = cw;
         _colorBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        _colorBox.DrawMode = DrawMode.OwnerDrawFixed;
+        _colorBox.ShowColorSwatches = true;
         _colorBox.Items.Add("Any color");
         foreach (var hex in Palette) _colorBox.Items.Add(hex);
-        _colorBox.DrawItem += DrawColorItem;
         _rotatePage.Controls.Add(_colorBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Fit", Location = new Point(c2, 290), AutoSize = true });
-        _fitBox.Location = new Point(c2, 312);
+        _rotatePage.Controls.Add(Caption("Fit", c2, 306));
+        _fitBox.Location = new Point(c2, 328);
         _fitBox.Width = cw;
         _fitBox.DropDownStyle = ComboBoxStyle.DropDownList;
         _rotatePage.Controls.Add(_fitBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Page cap", Location = new Point(740, 290), AutoSize = true });
-        _pageCapBox.Location = new Point(740, 312);
+        _rotatePage.Controls.Add(Caption("Page cap", 740, 306));
+        _pageCapBox.Location = new Point(740, 328);
         _pageCapBox.Width = cw;
         _pageCapBox.DropDownStyle = ComboBoxStyle.DropDownList;
         foreach (var v in PageCaps) _pageCapBox.Items.Add($"{v} pages");
         _rotatePage.Controls.Add(_pageCapBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Wallhaven API key", Location = new Point(c2, 350), AutoSize = true });
-        _keyBox.Location = new Point(c2, 372);
+        _rotatePage.Controls.Add(Caption("Wallhaven API key", c2, 370));
+        _keyBox.Location = new Point(c2, 392);
         _keyBox.Width = 480;
         _keyBox.UseSystemPasswordChar = true;
         _rotatePage.Controls.Add(_keyBox);
 
-        _rotatePage.Controls.Add(new Label { Text = "Collection", Location = new Point(c2, 410), AutoSize = true });
-        _collectionBox.Location = new Point(c2, 432);
+        _rotatePage.Controls.Add(Caption("Collection", c2, 434));
+        _collectionBox.Location = new Point(c2, 456);
         _collectionBox.Width = 380;
         _collectionBox.DropDownStyle = ComboBoxStyle.DropDownList;
         _rotatePage.Controls.Add(_collectionBox);
-        var loadBtn = new Button { Text = "Load", Location = new Point(890, 430), Size = new Size(90, 26) };
+        var loadBtn = new FluentButton { Text = "Load", Icon = FluentGlyph.Search, Location = new Point(886, 456), Size = new Size(94, 32) };
         loadBtn.Click += async (s, e) => await LoadCollectionsAsync();
         Tips.For(loadBtn, "Fetch your collection list from Wallhaven using the key above.");
         _rotatePage.Controls.Add(loadBtn);
         ApplyTooltips();
     }
+
+    private static Label Caption(string text, int x, int y) => new()
+    {
+        Text = text,
+        Location = new Point(x, y),
+        AutoSize = true,
+        Tag = "caption"
+    };
 
     private void ApplyTooltips()
     {
@@ -731,44 +782,6 @@ public partial class Form1 : Form
         Tips.For(_keyBox, "Your Wallhaven API key (wallhaven.cc → Settings → API). Only needed for collections.");
         Tips.For(_collectionBox, "Rotate from a saved Wallhaven collection instead of tag search (needs API key).");
         Tips.For(_themeBtn, "Switch between dark and light theme.");
-    }
-    private void DrawTabItem(object? sender, DrawItemEventArgs e)
-    {
-        if (e.Index < 0) return;
-        bool selected = e.Index == _tabs.SelectedIndex;
-        using var bg = new SolidBrush(selected ? Theme.ControlBack : Theme.Back);
-        e.Graphics.FillRectangle(bg, e.Bounds);
-        var textColor = selected ? Theme.Fore : Theme.DisabledFore;
-        TextRenderer.DrawText(e.Graphics, _tabs.TabPages[e.Index].Text, e.Font, e.Bounds, textColor,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        if (selected)
-        {
-            using var accent = new Pen(Theme.Accent, 3);
-            e.Graphics.DrawLine(accent, e.Bounds.Left + 8, e.Bounds.Bottom - 2, e.Bounds.Right - 8, e.Bounds.Bottom - 2);
-        }
-    }
-
-    private void DrawColorItem(object? sender, DrawItemEventArgs e)
-    {
-        if (e.Index < 0) return;
-        e.DrawBackground();
-        var text = (string)_colorBox.Items[e.Index];
-        if (e.Index == 0)
-        {
-            TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, Theme.Fore,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
-        }
-        else
-        {
-            var swatch = new Rectangle(e.Bounds.X + 2, e.Bounds.Y + 2, 24, e.Bounds.Height - 4);
-            using (var brush = new SolidBrush(ColorTranslator.FromHtml("#" + text)))
-                e.Graphics.FillRectangle(brush, swatch);
-            e.Graphics.DrawRectangle(Pens.Gray, swatch);
-            TextRenderer.DrawText(e.Graphics, "#" + text, e.Font,
-                new Rectangle(e.Bounds.X + 32, e.Bounds.Y, e.Bounds.Width - 32, e.Bounds.Height),
-                Theme.Fore, TextFormatFlags.VerticalCenter);
-        }
-        e.DrawFocusRectangle();
     }
 
     private async Task LoadCollectionsAsync()
@@ -826,7 +839,7 @@ public partial class Form1 : Form
         _trayIcon.DoubleClick += (s, e) => ShowWindow();
     }
 
-    private static void SelectCombo(ComboBox box, IEnumerable<string> items, string selected)
+    private static void SelectCombo(FluentComboBox box, IEnumerable<string> items, string selected)
     {
         box.Items.Clear();
         box.Items.AddRange(items.Cast<object>().ToArray());
@@ -916,9 +929,14 @@ public partial class Form1 : Form
         bool show = _scheduleBox.Checked;
         foreach (var c in _scheduleControls) c.Visible = show;
 
-        int statusY = show ? 710 : 574;
+        int statusY = show ? 734 : 584;
         _statusLabel.Location = new Point(20, statusY);
-        ClientSize = new Size(1000, statusY + 88);
+
+        // The status card lives on the tab page, whose origin sits below the tab strip.
+        // Add that header height so the bottom of the card is never clipped by the form.
+        int pageOffset = _tabs.ItemSize.Height + 4;
+        ClientSize = new Size(1000, pageOffset + statusY + 92);
+        _rotatePage.Invalidate();
     }
 
     private void UpdateThemeButton()
@@ -957,8 +975,9 @@ public partial class Form1 : Form
     private void UpdateFavoriteButton()
     {
         bool fav = !string.IsNullOrEmpty(_currentId) && HistoryService.IsFavorite(_currentId);
-        _favBtn.Text = fav ? "★" : "☆";
+        _favBtn.Icon = fav ? FluentGlyph.StarFilled : FluentGlyph.Star;
         _favBtn.ForeColor = fav ? Theme.Accent : Theme.Fore;
+        _favBtn.Invalidate();
     }
 
     private void ToggleCurrentFavorite()
@@ -975,8 +994,9 @@ public partial class Form1 : Form
     private void UpdateBlockButton()
     {
         bool blocked = !string.IsNullOrEmpty(_currentId) && BlocklistService.IsBlocked(_currentId);
-        _blockBtn.Text = blocked ? "✓" : "🚫";
+        _blockBtn.Icon = blocked ? FluentGlyph.Check : FluentGlyph.Block;
         _blockBtn.ForeColor = blocked ? Theme.Accent : Theme.Fore;
+        _blockBtn.Invalidate();
     }
 
     private void BlockCurrent()

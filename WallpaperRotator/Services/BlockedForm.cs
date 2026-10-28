@@ -46,13 +46,13 @@ public class BlockedForm : Form
 
     private Panel MakeRow(BlockedEntry e, int index)
     {
-        var row = new Panel
+        var row = new CardPanel
         {
             Height = 46,
             Margin = new Padding(3),
             Name = e.Id,
             Tag = "card",
-            BackColor = Theme.ControlBack,
+            BackColor = Theme.Card,
             ForeColor = Theme.Fore
         };
 
@@ -70,9 +70,9 @@ public class BlockedForm : Form
         var lblDate = new Label { Text = "blocked " + e.BlockedAt.ToString("yyyy-MM-dd  HH:mm"), Location = new Point(220, 14), AutoSize = true, BackColor = Color.Transparent, ForeColor = Theme.DisabledFore, Tag = "onCardDim" };
         var lblRes = new Label { Text = e.Resolution, Location = new Point(430, 14), AutoSize = true, BackColor = Color.Transparent, ForeColor = Theme.DisabledFore, Tag = "onCardDim" };
 
-        var btnUnblock = new Button { Text = "Unblock", Size = new Size(90, 28), Location = new Point(600, 9) };
-        var btnCopy = new Button { Text = "Copy", Size = new Size(68, 28), Location = new Point(696, 9) };
-        var btnOpen = new Button { Text = "Open", Size = new Size(68, 28), Location = new Point(770, 9) };
+        var btnUnblock = new FluentButton { Text = "Unblock", Icon = FluentGlyph.Check, IconSize = 14, Size = new Size(104, 28), Location = new Point(588, 9) };
+        var btnCopy = new FluentButton { Text = "Copy", Size = new Size(68, 28), Location = new Point(700, 9) };
+        var btnOpen = new FluentButton { Text = "Open", Icon = FluentGlyph.Open, IconSize = 14, Size = new Size(72, 28), Location = new Point(776, 9) };
 
         Tips.For(btnUnblock, "Allow this wallpaper back into the rotation pool.");
         Tips.For(btnCopy, "Copy the Wallhaven link to the clipboard.");
@@ -106,15 +106,17 @@ public class BlockedForm : Form
             var buttons = row.Controls.OfType<Button>().ToList();
             if (buttons.Count == 3)
             {
-                buttons[0].Location = new Point(w - 238, 9);   // Unblock
-                buttons[1].Location = new Point(w - 142, 9);   // Copy
-                buttons[2].Location = new Point(w - 68, 9);    // Open
+                buttons[0].Location = new Point(w - 270, 9);   // Unblock
+                buttons[1].Location = new Point(w - 158, 9);   // Copy
+                buttons[2].Location = new Point(w - 82, 9);    // Open
             }
         }
     }
 
     public void RefreshList()
     {
+        int scrollY = Math.Max(0, -_flow.AutoScrollPosition.Y);
+
         _flow.SuspendLayout();
         while (_flow.Controls.Count > 0)
         {
@@ -133,5 +135,8 @@ public class BlockedForm : Form
         }
         _flow.ResumeLayout();
         FitRowWidths();
+        _flow.AutoScrollPosition = new Point(0, scrollY);   // keep the reader's place
     }
+
+    public void ScrollToTop() => _flow.AutoScrollPosition = new Point(0, 0);
 }

@@ -1,30 +1,88 @@
-﻿namespace WallpaperRotator;
+﻿using System.Drawing.Drawing2D;
 
-/// <summary>Borderless, non-focusable icon button that paints itself to blend into the tab strip.</summary>
-public class ThemeToggleButton : Button
+namespace WallpaperRotator;
+
+/// <summary>Subtle, borderless icon button that toggles the dark/light theme.</summary>
+public class ThemeToggleButton : Control
 {
     private bool _hover;
+    private bool _pressed;
 
     public ThemeToggleButton()
     {
-        SetStyle(ControlStyles.Selectable, false);   // never focused -> never a focus ring
+        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
+                 ControlStyles.SupportsTransparentBackColor | ControlStyles.UserMouse, true);
+        SetStyle(ControlStyles.Selectable, false);
         TabStop = false;
-        FlatStyle = FlatStyle.Flat;
-        FlatAppearance.BorderSize = 0;
+        Size = new Size(32, 30);
+        BackColor = Theme.Back;
+        ForeColor = Theme.Fore;
+        AccessibleRole = AccessibleRole.PushButton;
+        AccessibleName = "Toggle dark or light theme";
     }
 
-    protected override void OnMouseEnter(EventArgs e) { _hover = true; Invalidate(); base.OnMouseEnter(e); }
-    protected override void OnMouseLeave(EventArgs e) { _hover = false; Invalidate(); base.OnMouseLeave(e); }
+    public void ApplyTheme()
+    {
+        BackColor = Theme.Back;
+        ForeColor = Theme.Fore;
+        Invalidate();
+    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        // Background: blend with strip, subtle hover highlight
-        using (var bg = new SolidBrush(_hover ? Theme.ControlBack : Theme.Back))
-            e.Graphics.FillRectangle(bg, ClientRectangle);
+        var g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-        // Icon: drawn by us, so font fallbacks can't surprise us
-        var glyph = Theme.Dark ? "☀" : "🌙";
-        TextRenderer.DrawText(e.Graphics, glyph, Font, e.ClipRectangle, Theme.Fore,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        using (var clear = new SolidBrush(Theme.Back))
+            g.FillRectangle(clear, ClientRectangle);
+
+        var fill = _pressed ? Theme.Overlay(Theme.SubtlePressed, Theme.Back)
+                 : _hover ? Theme.Overlay(Theme.SubtleHover, Theme.Back)
+                 : Theme.Back;
+
+        var rect = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
+        Theme.FillAndStroke(g, rect, 6f, fill, fill);
+
+        var glyph = Theme.Dark ? FluentGlyph.Sun : FluentGlyph.Moon;
+        float size = 18f;
+        var box = new RectangleF((Width - size) / 2f, (Height - size) / 2f, size, size);
+        FluentGlyphPainter.Draw(g, glyph, box, ForeColor, fill, 1.6f);
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        _hover = true;
+        Invalidate();
+        base.OnMouseEnter(e);
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        _hover = false;
+        _pressed = false;
+        Invalidate();
+        base.OnMouseLeave(e);
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
+        {
+            _pressed = true;
+            Invalidate();
+        }
+        base.OnMouseDown(e);
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left && _pressed)
+        {
+            _pressed = false;
+            Invalidate();
+        }
+        base.OnMouseUp(e);
     }
 }

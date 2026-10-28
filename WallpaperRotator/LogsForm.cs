@@ -23,17 +23,17 @@ public class LogsForm : Form
 
         var bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 46 };
 
-        var refreshBtn = new Button { Text = "Refresh", Location = new Point(12, 8), Size = new Size(100, 30) };
+        var refreshBtn = new FluentButton { Text = "Refresh", Icon = FluentGlyph.Refresh, IconSize = 14, Location = new Point(12, 8), Size = new Size(108, 30) };
         refreshBtn.Click += (s, e) => RefreshList();
 
-        var openBtn = new Button { Text = "Open log", Location = new Point(120, 8), Size = new Size(100, 30) };
+        var openBtn = new FluentButton { Text = "Open log", Icon = FluentGlyph.Open, IconSize = 14, Location = new Point(128, 8), Size = new Size(108, 30) };
         openBtn.Click += (s, e) =>
         {
             if (File.Exists(LogService.LogFilePath))
                 Process.Start(new ProcessStartInfo(LogService.LogFilePath) { UseShellExecute = true });
         };
 
-        var clearBtn = new Button { Text = "Clear log", Location = new Point(228, 8), Size = new Size(100, 30) };
+        var clearBtn = new FluentButton { Text = "Clear log", Icon = FluentGlyph.Trash, IconSize = 14, Variant = FluentButtonVariant.Danger, Location = new Point(244, 8), Size = new Size(108, 30) };
         clearBtn.Click += (s, e) =>
         {
             var answer = MessageBox.Show(this,
@@ -60,17 +60,41 @@ public class LogsForm : Form
 
         _box.Multiline = true;
         _box.ReadOnly = true;
+        _box.BorderStyle = BorderStyle.None;
         _box.Dock = DockStyle.Fill;
-        _box.ScrollBars = ScrollBars.Both;
-        _box.WordWrap = false;
+        _box.ScrollBars = ScrollBars.Vertical;
+        _box.WordWrap = true;
         _box.HideSelection = false;
         _box.Font = new Font("Consolas", 9F);
         _box.BackColor = Theme.ControlBack;
         _box.ForeColor = Theme.Fore;
 
-        Controls.Add(_box);
+        var boxHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12, 16, 12, 12) };
+        boxHost.Controls.Add(_box);
+
+        // WinForms' multiline EDIT scrollbars ignore the dark theme.  Word-wrap
+        // removes the horizontal bar, and this matching strip hides the light
+        // vertical bar while leaving wheel scrolling intact.
+        var scrollMask = new Panel { Tag = "logpad", BackColor = Theme.ControlBack };
+        boxHost.Controls.Add(scrollMask);
+
+        void PlaceScrollMask()
+        {
+            // Use the EDIT control's real scrollbar width: the themed bar can be
+            // narrower than SystemInformation's classic value, and overshooting
+            // would cover the last characters of every wrapped line.
+            int bar = _box.Width - _box.ClientSize.Width;
+            if (bar <= 0) bar = SystemInformation.VerticalScrollBarWidth;
+            scrollMask.SetBounds(_box.Left + _box.ClientSize.Width, _box.Top, bar, _box.Height);
+            scrollMask.BringToFront();
+        }
+        boxHost.Resize += (s, e) => PlaceScrollMask();
+        _box.Resize += (s, e) => PlaceScrollMask();
+        PlaceScrollMask();
+
+        Controls.Add(boxHost);
         Controls.Add(bottomBar);
-        _box.BringToFront();
+        boxHost.BringToFront();
 
         LogService.LineWritten += OnLineWritten;
         Theme.Apply(this);

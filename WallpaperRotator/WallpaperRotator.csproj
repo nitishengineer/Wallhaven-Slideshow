@@ -6,6 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWindowsForms>true</UseWindowsForms>
 		<RollForward>Major</RollForward>
+		<NoWarn>$(NoWarn);WFO1000</NoWarn>
 	</PropertyGroup>
 	<PropertyGroup>
 		<ApplicationIcon>app.ico</ApplicationIcon>

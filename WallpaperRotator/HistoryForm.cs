@@ -10,8 +10,10 @@ public class HistoryForm : Form
     private readonly ListView _list = new();
     private readonly ImageList _thumbs = new();
     private readonly List<HistoryEntry> _shown = new();
-    private readonly Button _favBtn = new();
-    private readonly Button _blockBtn = new();
+    private readonly FluentButton _favBtn = new();
+    private readonly FluentButton _blockBtn = new();
+    private FluentButton _setBtn = null!;
+    private FluentButton _viewBtn = null!;
     private readonly Label _statusLabel = new();
 
     public event Action<string>? StatusChanged;
@@ -22,20 +24,20 @@ public class HistoryForm : Form
     {
         ClientSize = new Size(960, 570);
 
-        _thumbs.ImageSize = new Size(150, 90);
+        _thumbs.ImageSize = new Size(146, 88);
         _thumbs.ColorDepth = ColorDepth.Depth32Bit;
 
         _list.Location = new Point(12, 12);
         _list.Size = new Size(936, 500);
-        _list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        _list.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         _list.View = View.LargeIcon;
         _list.LargeImageList = _thumbs;
         _list.MultiSelect = false;
         _list.HideSelection = false;
-        _list.SelectedIndexChanged += (s, e) => { UpdateFavButtonText(); UpdateBlockButtonText(); };
         Controls.Add(_list);
 
-        var setBtn = new Button { Text = "Set again", Location = new Point(12, 524), Size = new Size(100, 34) };
+        var setBtn = new FluentButton { Text = "Set again", Icon = FluentGlyph.Photo, Location = new Point(12, 524), Size = new Size(110, 34) };
+        _setBtn = setBtn;
         setBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         setBtn.Click += (s, e) =>
         {
@@ -48,7 +50,8 @@ public class HistoryForm : Form
             RefreshList();
         };
 
-        var viewBtn = new Button { Text = "View in Wallhaven", Location = new Point(120, 524), Size = new Size(140, 34) };
+        var viewBtn = new FluentButton { Text = "View in Wallhaven", Icon = FluentGlyph.Open, Location = new Point(132, 524), Size = new Size(158, 34) };
+        _viewBtn = viewBtn;
         viewBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         viewBtn.Click += (s, e) =>
         {
@@ -57,28 +60,30 @@ public class HistoryForm : Form
             Process.Start(new ProcessStartInfo($"https://wallhaven.cc/w/{sel.Id}") { UseShellExecute = true });
         };
 
-        _favBtn.Text = "★ Favorite";
-        _favBtn.Location = new Point(268, 524);
-        _favBtn.Size = new Size(100, 34);
+        _favBtn.Text = "Favorite";
+        _favBtn.Icon = FluentGlyph.Star;
+        _favBtn.Location = new Point(298, 524);
+        _favBtn.Size = new Size(112, 34);
         _favBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         _favBtn.Click += (s, e) => ToggleFavorite();
 
-        _blockBtn.Text = "🚫 Block";
-        _blockBtn.Location = new Point(376, 524);
-        _blockBtn.Size = new Size(90, 34);
+        _blockBtn.Text = "Block";
+        _blockBtn.Icon = FluentGlyph.Block;
+        _blockBtn.Location = new Point(418, 524);
+        _blockBtn.Size = new Size(100, 34);
         _blockBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         _blockBtn.Click += (s, e) => ToggleBlock();
 
-        var openBtn = new Button { Text = "Open cache", Location = new Point(474, 524), Size = new Size(90, 34) };
+        var openBtn = new FluentButton { Text = "Open cache", Icon = FluentGlyph.Folder, Location = new Point(526, 524), Size = new Size(112, 34)};
         openBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         openBtn.Click += (s, e) => Process.Start("explorer.exe", CacheService.Folder);
 
-        var delBtn = new Button { Text = "Delete cache", Location = new Point(572, 524), Size = new Size(90, 34) };
+        var delBtn = new FluentButton { Text = "Delete cache", Icon = FluentGlyph.Trash, Location = new Point(646, 524), Size = new Size(112, 34), Variant = FluentButtonVariant.Danger };
         delBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         delBtn.Click += (s, e) => ConfirmDeleteCache();
 
-        _statusLabel.Location = new Point(670, 524);
-        _statusLabel.Size = new Size(278, 34);
+        _statusLabel.Location = new Point(766, 524);
+        _statusLabel.Size = new Size(182, 34);
         _statusLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
         _statusLabel.TextAlign = ContentAlignment.MiddleRight;
         _statusLabel.Text = "";
@@ -97,6 +102,33 @@ public class HistoryForm : Form
         _blockBtn.BringToFront();
         openBtn.BringToFront();
         delBtn.BringToFront();
+
+        _list.SelectedIndexChanged += (s, e) =>
+        {
+            UpdateFavButtonText();
+            UpdateBlockButtonText();
+            UpdateSelectionButtons();
+        };
+
+        void LayoutBottom()
+        {
+            int y = Math.Max(12, ClientSize.Height - 46);
+            _list.SetBounds(12, 12, Math.Max(120, ClientSize.Width - 24), Math.Max(60, y - 24));
+
+            int x = 12;
+            setBtn.Location = new Point(x, y); x += setBtn.Width + 8;
+            viewBtn.Location = new Point(x, y); x += viewBtn.Width + 8;
+            _favBtn.Location = new Point(x, y); x += _favBtn.Width + 8;
+            _blockBtn.Location = new Point(x, y); x += _blockBtn.Width + 8;
+            openBtn.Location = new Point(x, y); x += openBtn.Width + 8;
+            delBtn.Location = new Point(x, y);
+
+            _statusLabel.SetBounds(Math.Max(x + delBtn.Width + 12, ClientSize.Width - 194), y,
+                182, 34);
+        }
+
+        Resize += (s, e) => LayoutBottom();
+        LayoutBottom();
 
         BlocklistService.Changed += RefreshList;
 
@@ -123,14 +155,28 @@ public class HistoryForm : Form
     private void UpdateFavButtonText()
     {
         var sel = Selected();
-        _favBtn.Text = sel is not null && sel.Favorite ? "Unfavorite" : "★ Favorite";
+        bool fav = sel is not null && sel.Favorite;
+        _favBtn.Text = fav ? "Unfavorite" : "Favorite";
+        _favBtn.Icon = fav ? FluentGlyph.StarFilled : FluentGlyph.Star;
+        _favBtn.Invalidate();
     }
 
     private void UpdateBlockButtonText()
     {
         var sel = Selected();
         bool blocked = sel is not null && BlocklistService.IsBlocked(sel.Id);
-        _blockBtn.Text = blocked ? "Unblock" : "🚫 Block";
+        _blockBtn.Text = blocked ? "Unblock" : "Block";
+        _blockBtn.Icon = blocked ? FluentGlyph.Check : FluentGlyph.Block;
+        _blockBtn.Invalidate();
+    }
+
+    private void UpdateSelectionButtons()
+    {
+        bool has = _list.SelectedIndices.Count == 1;
+        _setBtn.Enabled = has;
+        _viewBtn.Enabled = has;
+        _favBtn.Enabled = has;
+        _blockBtn.Enabled = has;
     }
 
     private void ToggleFavorite()
@@ -187,7 +233,7 @@ public class HistoryForm : Form
         {
             if (!File.Exists(e.FilePath)) continue;
 
-            try { _thumbs.Images.Add(MakeThumb(e.FilePath, 150, 90)); }
+            try { _thumbs.Images.Add(MakeThumb(e.FilePath, 146, 88)); }
             catch { continue; }
 
             var prefix = (e.Favorite ? "★ " : "") + (BlocklistService.IsBlocked(e.Id) ? "🚫 " : "");
@@ -197,6 +243,9 @@ public class HistoryForm : Form
         }
         UpdateFavButtonText();
         UpdateBlockButtonText();
+        UpdateSelectionButtons();
+        if (_list.IsHandleCreated && _list.Items.Count > 0)
+            _list.EnsureVisible(0);
     }
 
     private static Bitmap MakeThumb(string path, int w, int h)
