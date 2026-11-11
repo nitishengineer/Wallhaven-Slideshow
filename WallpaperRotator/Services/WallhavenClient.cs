@@ -6,6 +6,7 @@ namespace WallpaperRotator.Services;
 public class WallhavenQuery
 {
     public string Tag { get; set; } = "";
+    public List<string> ExcludedTags { get; set; } = new();
     public int Width { get; set; } = 1920;
     public int Height { get; set; } = 1080;
     public bool Exact { get; set; }
@@ -98,7 +99,7 @@ public class WallhavenClient
         var res = q.Exact ? $"resolutions={q.Width}x{q.Height}" : $"atleast={q.Width}x{q.Height}";
         var ratios = string.IsNullOrEmpty(q.Ratio) ? "" : $"&ratios={Uri.EscapeDataString(q.Ratio)}";
         var colors = string.IsNullOrEmpty(q.ColorHex) ? "" : $"&colors={Uri.EscapeDataString(q.ColorHex.TrimStart('#'))}";
-        var baseUrl = $"{SearchEndpoint}?q={Uri.EscapeDataString(q.Tag)}" +
+        var baseUrl = $"{SearchEndpoint}?q={Uri.EscapeDataString(BuildQueryText(q))}" +
                       $"&categories={q.Categories}&purity={q.Purity}" +
                       $"&sorting={Uri.EscapeDataString(q.Sorting)}" +
                       $"&{res}{ratios}{colors}" + Auth;
@@ -120,6 +121,32 @@ public class WallhavenClient
         var chosenPage = await GetPageAsync(baseUrl + $"&page={page}", ct);
         LogService.Info($"Page roll: {page}/{maxPage} -> {chosenPage.Items.Count} items");
         return chosenPage.Items.Count > 0 ? chosenPage.Items : firstPage.Items;
+    }
+
+    /// <summary>
+    /// Wallhaven treats multiple bare words as AND, and a leading '-' as an
+    /// exclusion.  Exclusions are always quoted because an unquoted multi-word
+    /// exclusion ("-anime girls") is parsed as two separate terms and collapses
+    /// the result set to zero — quoting preserves the phrase as one tag.
+    /// </summary>
+    private static string BuildQueryText(WallhavenQuery q)
+    {
+        var parts = new List<string>();
+        string include = (q.Tag ?? "").Trim();
+        if (include.Length > 0) parts.Add(include);
+
+        foreach (var raw in q.ExcludedTags ?? new List<string>())
+        {
+            string tag = (raw ?? "").Trim().Replace("\"", "");
+            if (tag.Length == 0) continue;
+            // The UI keeps the two lists disjoint, but the single Category can
+            // still collide with an exclusion.  Ignore the contradiction rather
+            // than issuing a query that is guaranteed to return nothing.
+            if (tag.Equals(include, StringComparison.OrdinalIgnoreCase)) continue;
+            parts.Add($"-\"{tag}\"");
+        }
+
+        return string.Join(" ", parts);
     }
 
     public async Task<List<WallhavenWallpaper>> GetCollectionAsync(int collectionId, CancellationToken ct = default)

@@ -17,6 +17,10 @@ public enum FluentGlyph
     Moon,
     Sun,
     ChevronDown,
+    ChevronUp,
+    Plus,
+    Close,
+    Tag,
     Folder,
     Trash,
     Open,
@@ -177,6 +181,56 @@ public static class FluentGlyphPainter
                     new PointF(cx, cy + w * 0.45f),
                     new PointF(cx + w, cy - w * 0.45f)
                 });
+                break;
+            }
+
+            case FluentGlyph.ChevronUp:
+            {
+                float w = s * 0.32f;
+                g.DrawLines(pen, new[]
+                {
+                    new PointF(cx - w, cy + w * 0.45f),
+                    new PointF(cx, cy - w * 0.45f),
+                    new PointF(cx + w, cy + w * 0.45f)
+                });
+                break;
+            }
+
+            case FluentGlyph.Plus:
+            {
+                float w = s * 0.30f;
+                g.DrawLine(pen, cx - w, cy, cx + w, cy);
+                g.DrawLine(pen, cx, cy - w, cx, cy + w);
+                break;
+            }
+
+            case FluentGlyph.Close:
+            {
+                float w = s * 0.26f;
+                g.DrawLine(pen, cx - w, cy - w, cx + w, cy + w);
+                g.DrawLine(pen, cx + w, cy - w, cx - w, cy + w);
+                break;
+            }
+
+            case FluentGlyph.Tag:
+            {
+                float left = cx - s * 0.36f;
+                float top = cy - s * 0.30f;
+                float right = cx + s * 0.34f;
+                float bottom = cy + s * 0.30f;
+                float notch = s * 0.20f;
+                using var path = new GraphicsPath();
+                path.AddLines(new[]
+                {
+                    new PointF(left, top),
+                    new PointF(right - notch, top),
+                    new PointF(right, cy),
+                    new PointF(right - notch, bottom),
+                    new PointF(left, bottom)
+                });
+                path.CloseFigure();
+                g.DrawPath(pen, path);
+                g.FillEllipse(brush, left + s * 0.12f, cy - s * 0.045f, s * 0.09f, s * 0.09f);
                 break;
             }
 

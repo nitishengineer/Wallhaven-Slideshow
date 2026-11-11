@@ -65,6 +65,7 @@ public class FluentTabControl : TabControl
     public static FluentGlyph GlyphFor(string pageText) => pageText switch
     {
         "Rotate" => FluentGlyph.Refresh,
+        "Tags" => FluentGlyph.Tag,
         "Cache" => FluentGlyph.Cache,
         "Favorite" => FluentGlyph.Star,
         "History" => FluentGlyph.History,

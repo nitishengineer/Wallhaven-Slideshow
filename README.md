@@ -8,6 +8,7 @@ A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [W
 
 - 🔄 **Auto-rotation engine** — intervals from 1 minute to 24 hours, manual "Next now", full tray control, pause anytime
 - 🎯 **Deep Wallhaven filters** — tags, categories (General/Anime/People), purity, resolution (*at least* / *exactly*), aspect ratio, color palette, 7 source orders and a sampling page cap
+- 🏷️ **Tag pools** — a dedicated Tags tab with searchable Included/Excluded lists: rotate one included tag per wallpaper (in order or shuffle-bag), always filter out excluded tags, and autocomplete from Wallhaven's live tag catalogue
 - 🌅 **Time-of-day schedule** — four tag slots (morning/afternoon/evening/night) by clock hours **or real sunrise/sunset** computed from your latitude/longitude
 - ⭐ **Favorites system** — a "favorite boost" dice (1–100%) that swaps searches for your ★ pool, plus immunity from pruning and history trimming
 - 🚫 **Blocklist** — "never show again" per wallpaper (Rotate/Cache/History tabs), with its own Blocked tab and Unblock
@@ -18,7 +19,7 @@ A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [W
 - 🌙 **Dark & light themes** — one-click 🌙/☀ switch; the palette, native dropdowns, list views, title bar and system chrome all follow the chosen mode
 - 🔌 **Offline resilience** — rotates from cache when the network or Wallhaven is down, with auto-retry + backoff on 5xx errors
 - 🗂️ **Collections** — rotate from your Wallhaven collections using a personal API key
-- 🧰 **Quality of life** — start with Windows, single instance, pause in fullscreen, six-tab UI, diagnostics log tab, tooltips on every option
+- 🧰 **Quality of life** — start with Windows, single instance, pause in fullscreen, seven-tab UI, diagnostics log tab, tooltips on every option
 
 ## 🛠️ Tech Stack
 
@@ -55,6 +56,7 @@ dotnet publish WallpaperRotator -c Release -r win-x64 --self-contained -p:Publis
 ```
 WallpaperRotator/
 ├── Form1.cs               # main window: Rotate tab, tab host, tray, all settings UI
+├── TagsForm.cs            # Tags tab — Included/Excluded pools with live tag search
 ├── HistoryForm.cs         # Cache tab — thumbnails + set/favorite/block/delete actions
 ├── FavoriteForm.cs        # Favorite tab — starred wallpapers
 ├── HistoryLogForm.cs      # History tab — full rotation log with re-download
@@ -69,6 +71,7 @@ WallpaperRotator/
 │   ├── FluentToggleSwitch.cs  # animated Windows 11 toggle
 │   ├── FluentField.cs         # rounded text fields + numeric editor
 │   ├── FluentComboBox.cs      # rounded combo + themed popup
+│   ├── TagPicker.cs           # tag field with debounced Wallhaven suggestions
 │   ├── FluentGlyph.cs         # vector icon painter (no icon font)
 │   └── FluentSurfaces.cs      # rounded cards / picture boxes
 ├── Models/
@@ -83,6 +86,8 @@ WallpaperRotator/
 │   ├── HistoryService.cs     # used-list, favorites, history cap
 │   ├── BlocklistService.cs   # permanent "never show again" list
 │   ├── SettingsService.cs    # settings.json persistence
+│   ├── TagCatalog.cs         # Wallhaven tag search/popular catalogue (cached)
+│   ├── TagPool.cs            # ordered / shuffle-bag tag picker
 │   ├── LogService.cs         # rotating rotator.log
 │   └── SolarTimes.cs         # sunrise/sunset computation
 └── Program.cs             # single-instance mutex + entry point
@@ -96,7 +101,7 @@ What began as *"can I rotate Wallhaven wallpapers with a small script?"* grew in
 - Designing a resilient network pipeline: page clamping, retry with backoff, offline cache fallback
 - Owner-drawing standard WinForms controls to build a coherent dark/light theme
 - Building a Fluent (Windows 11) look in pure WinForms: DWM Mica/rounded chrome, system accent colour, animated toggles, pill tabs and a custom combo popup
-- Event-driven state sync across six embedded tab views (favorites, blocks, applies)
+- Event-driven state sync across seven embedded tab views (favorites, blocks, applies)
 - The full product loop: idea → feature → manual QA → published exe → Git/GitHub workflow
 
 ## 🙌 Author

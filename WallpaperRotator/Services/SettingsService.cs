@@ -43,6 +43,22 @@ public class AppSettings
     public bool UpdateChecksEnabled { get; set; } = true;
     public DateTime LastUpdateCheckUtc { get; set; }
     public string SkippedVersion { get; set; } = "";
+
+    // ----- Tag pool (Tags tab) -----
+    /// <summary>When on, rotation picks one tag from <see cref="PoolTags"/> per change instead of the single Category.</summary>
+    public bool UseTagPool { get; set; }
+    /// <summary>Ordered list of tags to rotate through (one included tag per wallpaper fetch).</summary>
+    public List<string> PoolTags { get; set; } = new();
+    /// <summary>Tags whose wallpapers are always filtered out, whether the pool is on or off.</summary>
+    public List<string> ExcludedTags { get; set; } = new();
+    /// <summary>"order" (follow the Included ranking) or "shuffle" (shuffle bag).</summary>
+    public string TagOrderMode { get; set; } = "order";
+    /// <summary>Next index used in ordered mode.</summary>
+    public int PoolCursor { get; set; }
+    /// <summary>Tags left in the current shuffle bag (shuffle mode only).</summary>
+    public List<string> PoolBag { get; set; } = new();
+    /// <summary>Last tag the shuffle bag handed out, so a bag refill never repeats it immediately.</summary>
+    public string PoolLast { get; set; } = "";
 }
 
 public static class SettingsService

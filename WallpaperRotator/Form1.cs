@@ -19,11 +19,13 @@ public partial class Form1 : Form
 
     private readonly FluentTabControl _tabs = new();
     private readonly TabPage _rotatePage = new("Rotate");
+    private readonly TabPage _tagsPage = new("Tags");
     private readonly TabPage _cachePage = new("Cache");
     private readonly TabPage _favoritePage = new("Favorite");
     private readonly TabPage _historyLogPage = new("History");
     private readonly TabPage _blockedPage = new("Blocked");
     private readonly TabPage _logsPage = new("Logs");
+    private readonly TagsForm _tagsEmbed;
     private readonly HistoryForm _cacheEmbed = new();
     private readonly FavoriteForm _favoriteEmbed = new();
     private readonly HistoryLogForm _historyLogEmbed = new();
@@ -105,6 +107,7 @@ public partial class Form1 : Form
 
     // ----- Rotate tab: right column -----
     private readonly FluentComboBox _tagBox = new();
+    private readonly FluentToggleSwitch _poolBox = new();
     private readonly FluentToggleSwitch _generalBox = new();
     private readonly FluentToggleSwitch _animeBox = new();
     private readonly FluentToggleSwitch _peopleBox = new();
@@ -133,6 +136,7 @@ public partial class Form1 : Form
     private bool _capLocked;
     private bool _boostLocked;
     private bool _solarLocked;
+    private bool _poolSync;
     private string _currentPath = "";
     private string _currentId = "";
     private string _currentRes = "";
@@ -148,9 +152,12 @@ public partial class Form1 : Form
         _appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         if (_appIcon is not null) Icon = _appIcon;
 
+        _tagsEmbed = new TagsForm(_settings);
+
         // ----- tabs -----
         _tabs.Dock = DockStyle.Fill;
         _tabs.TabPages.Add(_rotatePage);
+        _tabs.TabPages.Add(_tagsPage);
         _tabs.TabPages.Add(_cachePage);
         _tabs.TabPages.Add(_favoritePage);
         _tabs.TabPages.Add(_historyLogPage);
@@ -158,11 +165,12 @@ public partial class Form1 : Form
         _tabs.TabPages.Add(_logsPage);
         _tabs.SelectedIndexChanged += (s, e) =>
         {
-            if (_tabs.SelectedIndex == 1) _cacheEmbed.RefreshList();
-            else if (_tabs.SelectedIndex == 2) _favoriteEmbed.RefreshList();
-            else if (_tabs.SelectedIndex == 3) { _historyLogEmbed.RefreshList(); _historyLogEmbed.ScrollToTop(); }
-            else if (_tabs.SelectedIndex == 4) { _blockedEmbed.RefreshList(); _blockedEmbed.ScrollToTop(); }
-            else if (_tabs.SelectedIndex == 5) _logsEmbed.RefreshList();
+            if (_tabs.SelectedIndex == 1) _tagsEmbed.RefreshView();
+            else if (_tabs.SelectedIndex == 2) _cacheEmbed.RefreshList();
+            else if (_tabs.SelectedIndex == 3) _favoriteEmbed.RefreshList();
+            else if (_tabs.SelectedIndex == 4) { _historyLogEmbed.RefreshList(); _historyLogEmbed.ScrollToTop(); }
+            else if (_tabs.SelectedIndex == 5) { _blockedEmbed.RefreshList(); _blockedEmbed.ScrollToTop(); }
+            else if (_tabs.SelectedIndex == 6) _logsEmbed.RefreshList();
         };
         Controls.Add(_tabs);
 
@@ -202,6 +210,16 @@ public partial class Form1 : Form
         }
         ClientSizeChanged += (s, e) => PlaceEdgeMasks();
         PlaceEdgeMasks();
+
+        // ----- embedded Tags tab -----
+        _tagsEmbed.TopLevel = false;
+        _tagsEmbed.FormBorderStyle = FormBorderStyle.None;
+        _tagsEmbed.Dock = DockStyle.Fill;
+        _tagsPage.Controls.Add(_tagsEmbed);
+        _tagsEmbed.Show();
+        _tagsEmbed.StatusChanged += msg => _statusLabel.Text = msg;
+        _tagsEmbed.Changed += () => SaveSettings();
+        _tagsEmbed.PoolEnabledChanged += enabled => SetTagPool(enabled, true);
 
         // ----- embedded Cache tab -----
         _cacheEmbed.TopLevel = false;
@@ -253,6 +271,7 @@ public partial class Form1 : Form
 
         // ----- Restore saved settings -----
         _tagBox.Text = _settings.Tag;
+        _poolBox.Checked = _settings.UseTagPool;
         SelectInterval(_settings.IntervalMinutes);
         SelectCombo(_orderBox, SortOrders.Select(s => s.Label),
             SortOrders.FirstOrDefault(s => s.Value == _settings.Sorting).Label);
@@ -289,6 +308,8 @@ public partial class Form1 : Form
         _lonBox.Value = Math.Clamp((decimal)_settings.Longitude, _lonBox.Minimum, _lonBox.Maximum);
         UpdateSolarEnabled();
         UpdateScheduleLabels();
+        _tagsEmbed.PoolEnabled = _settings.UseTagPool;
+        _tagsEmbed.AllowNsfw = _settings.PuritySketchy;
         UpdateTagBoxEnabled();
 
         _generalBox.Checked = _settings.CatGeneral;
@@ -335,6 +356,7 @@ public partial class Form1 : Form
             SaveSettings();
         };
         _tagBox.DropDown += (s, e) => { if (_tagLocked) _tagBox.DroppedDown = false; };
+        _poolBox.CheckedChanged += (s, e) => SetTagPool(_poolBox.Checked, true);
         _intervalBox.SelectedIndexChanged += (s, e) => { ApplyInterval(); SaveSettings(); };
         _orderBox.SelectedIndexChanged += (s, e) => SaveSettings();
         _fitBox.SelectedIndexChanged += (s, e) =>
@@ -382,7 +404,7 @@ public partial class Form1 : Form
             if (_resLocked) { _minHBox.Value = Math.Clamp(_settings.MinHeight, (int)_minHBox.Minimum, (int)_minHBox.Maximum); return; }
             SaveSettings();
         };
-        _scheduleBox.CheckedChanged += (s, e) => { UpdateTagBoxEnabled(); UpdateScheduleVisibility(); SaveSettings(); };
+        _scheduleBox.CheckedChanged += (s, e) => { UpdateTagBoxEnabled(); UpdateScheduleVisibility(); SaveSettings(); _tagsEmbed.RefreshView(); };
         _solarBox.CheckedChanged += (s, e) => { UpdateSolarEnabled(); UpdateScheduleLabels(); SaveSettings(); };
         _latBox.ValueChanged += (s, e) =>
         {
@@ -398,6 +420,7 @@ public partial class Form1 : Form
             box.TextChanged += (s, e) => SaveSettings();
         foreach (var cb in new[] { _generalBox, _animeBox, _peopleBox, _sketchyBox })
             cb.CheckedChanged += (s, e) => SaveSettings();
+        _sketchyBox.CheckedChanged += (s, e) => _tagsEmbed.AllowNsfw = _settings.PuritySketchy;
         _ratioBox.SelectedIndexChanged += (s, e) => SaveSettings();
         _colorBox.SelectedIndexChanged += (s, e) => SaveSettings();
         _resModeBox.SelectedIndexChanged += (s, e) => SaveSettings();
@@ -452,6 +475,7 @@ public partial class Form1 : Form
                             $"pageCap={_settings.PageCap} historyCap={(_settings.HistoryCapEnabled ? _settings.HistoryCap.ToString() : "off")} " +
                             $"boost={(_settings.FavoriteBoostEnabled ? _settings.FavoriteBoostPercent + "%" : "off")} " +
                             $"solar={(_settings.SolarScheduleEnabled ? $"{_settings.Latitude},{_settings.Longitude}" : "off")} " +
+                            $"pool={(_settings.UseTagPool ? $"{_settings.PoolTags.Count} tags/{_settings.TagOrderMode}/{_settings.ExcludedTags.Count} excluded" : "off")} " +
                             $"cache={_settings.CacheMaxFiles}files/{_settings.CacheMaxMb}MB dark={_settings.DarkMode}");
             await RotateSafeAsync();
             _ = CheckForUpdatesAsync();
@@ -632,6 +656,10 @@ public partial class Form1 : Form
 
         // ================= RIGHT COLUMN =================
         _rotatePage.Controls.Add(Caption("Category", c2, 16));
+        _poolBox.Text = "Use multiple tags";
+        _poolBox.Location = new Point(740, 10);
+        _poolBox.AutoSize = true;
+        _rotatePage.Controls.Add(_poolBox);
         _tagBox.Location = new Point(c2, 38);
         _tagBox.Width = 480;
         _tagBox.Items.AddRange(new object[] { "abstract", "nature", "cyberpunk", "minimalist", "space", "fantasy", "anime", "cars", "avengers" });
@@ -765,6 +793,7 @@ public partial class Form1 : Form
 
         // ----- right column -----
         Tips.For(_tagBox, "Search tag(s) — anything Wallhaven accepts, e.g. 'minimalist' or 'cyberpunk city'. Locked while the schedule is on.");
+        Tips.For(_poolBox, "Use the Tags tab's Included list: one tag is picked per rotation, and its Excluded tags are filtered out. The Category field above is ignored while this is on.");
         Tips.For(_generalBox, "Include General-category wallpapers.");
         Tips.For(_animeBox, "Include Anime-category wallpapers.");
         Tips.For(_peopleBox, "Include People-category wallpapers.");
@@ -825,11 +854,11 @@ public partial class Form1 : Form
         menu.Items.Add("Next wallpaper now", null, async (s, e) => await RotateSafeAsync());
         menu.Items.Add(_pauseItem);
         menu.Items.Add(_multiItem);
-        menu.Items.Add("Cache", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 1; });
-        menu.Items.Add("Favorites", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 2; });
-        menu.Items.Add("History", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 3; });
-        menu.Items.Add("Blocked", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 4; });
-        menu.Items.Add("Logs", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 5; });
+        menu.Items.Add("Cache", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 2; });
+        menu.Items.Add("Favorites", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 3; });
+        menu.Items.Add("History", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 4; });
+        menu.Items.Add("Blocked", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 5; });
+        menu.Items.Add("Logs", null, (s, e) => { ShowWindow(); _tabs.SelectedIndex = 6; });
         menu.Items.Add("Open log", null, (s, e) =>
             Process.Start(new ProcessStartInfo(LogService.LogFilePath) { UseShellExecute = true }));
         menu.Items.Add("Check for updates", null, async (s, e) => await CheckForUpdatesAsync(force: true));
@@ -1057,24 +1086,47 @@ public partial class Form1 : Form
             }
 
             if (_scheduleBox.Checked) UpdateScheduleLabels();   // keep solar boundaries fresh across days
-            var tag = CurrentTag();
-            var (minW, minH) = CurrentMinResolution();
-            var query = new WallhavenQuery
+
+            bool poolActive = _settings.UseTagPool && !_scheduleBox.Checked;
+            bool poolEmpty = false;
+            if (_settings.UseTagPool && _scheduleBox.Checked)
+                LogService.Info("Tag pool is enabled but the time-of-day schedule is active — schedule wins.");
+            if (poolActive && (_settings.PoolTags is null || _settings.PoolTags.Count == 0))
             {
-                Tag = tag,
-                Width = minW,
-                Height = minH,
-                Exact = _settings.ResMode == "exactly",
-                Sorting = CurrentSorting(),
-                Categories = CategoryBits(),
-                Purity = PurityBits(),
-                Ratio = _settings.Ratio,
-                ColorHex = _settings.ColorHex,
-                PageCap = _settings.PageCap
-            };
+                poolActive = false;
+                poolEmpty = true;
+                LogService.Warn("Tag pool is empty — falling back to the single Category.");
+            }
+
             try
             {
-                var result = await _engine.RotateAsync(query, ParseFit());
+                if (poolActive)
+                {
+                    int attempts = Math.Min(_settings.PoolTags!.Count, 5);
+                    for (int i = 0; i < attempts; i++)
+                    {
+                        var pick = NextPoolTag();
+                        if (pick.Tag.Length == 0) break;
+
+                        var poolResult = await _engine.RotateAsync(BuildQuery(pick.Tag), ParseFit());
+                        if (poolResult is not null)
+                        {
+                            ApplyResult(poolResult, "  •  " + pick.Info);
+                            SaveSettings();
+                            return;
+                        }
+
+                        LogService.Warn($"No wallpapers for pool tag '{pick.Tag}' — trying the next tag.");
+                    }
+
+                    SaveSettings();   // remember the skipped tags so a retry moves forward
+                    _statusLabel.Text = "No wallpapers for any pool tag. Relax a filter or edit the Tags list.";
+                    return;
+                }
+
+                var tag = CurrentTag();
+                var (minW, minH) = CurrentMinResolution();
+                var result = await _engine.RotateAsync(BuildQuery(tag), ParseFit());
                 if (result is null)
                 {
                     var active = new List<string>();
@@ -1085,7 +1137,7 @@ public partial class Form1 : Form
                     _statusLabel.Text = $"No wallpapers for \"{tag}\" matching: {string.Join(", ", active)}. Relax a filter or pick another color.";
                     return;
                 }
-                ApplyResult(result, "");
+                ApplyResult(result, poolEmpty ? "  •  pool empty — Category used" : "");
                 SaveSettings();
             }
             catch (Exception netEx) when (IsNetworkError(netEx))
@@ -1138,6 +1190,28 @@ public partial class Form1 : Form
         _engine.CollectionId = string.IsNullOrEmpty(_settings.ApiKey) ? 0 : _settings.CollectionId;
         _engine.ApiKey = _settings.ApiKey;
     }
+
+    private WallhavenQuery BuildQuery(string tag)
+    {
+        var (minW, minH) = CurrentMinResolution();
+        return new WallhavenQuery
+        {
+            Tag = tag,
+            ExcludedTags = new List<string>(_settings.ExcludedTags ?? new List<string>()),
+            Width = minW,
+            Height = minH,
+            Exact = _settings.ResMode == "exactly",
+            Sorting = CurrentSorting(),
+            Categories = CategoryBits(),
+            Purity = PurityBits(),
+            Ratio = _settings.Ratio,
+            ColorHex = _settings.ColorHex,
+            PageCap = _settings.PageCap
+        };
+    }
+
+    /// <summary>Chooses the next included tag (ordered walk or shuffle bag).</summary>
+    private (string Tag, string Info) NextPoolTag() => TagPool.Pick(_settings);
 
     private string CategoryBits()
     {
@@ -1202,20 +1276,35 @@ public partial class Form1 : Form
 
     private void UpdateTagBoxEnabled()
     {
-        _tagLocked = _scheduleBox.Checked;
+        bool schedule = _scheduleBox.Checked;
+        bool pool = _settings.UseTagPool;
 
-        if (_tagLocked)
+        if (schedule)
         {
+            _tagLocked = true;
             var current = _settings.Tag;
             if (!string.IsNullOrEmpty(current) && !_tagBox.Items.Contains(current))
                 _tagBox.Items.Add(current);
             _tagBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            _tagBox.Enabled = true;
             _tagBox.SelectedItem = current;
+            _tagBox.ForeColor = Theme.DisabledFore;
+        }
+        else if (pool)
+        {
+            // The pool chooses the tag now, so the single Category is ignored
+            // and shown disabled rather than hidden (the saved value stays put).
+            _tagLocked = true;
+            _tagBox.DropDownStyle = ComboBoxStyle.DropDown;
+            _tagBox.Enabled = false;
+            _tagBox.Text = _settings.Tag;
             _tagBox.ForeColor = Theme.DisabledFore;
         }
         else
         {
+            _tagLocked = false;
             _tagBox.DropDownStyle = ComboBoxStyle.DropDown;
+            _tagBox.Enabled = true;
             _tagBox.Text = _settings.Tag;
             _tagBox.ForeColor = Theme.Fore;
         }
@@ -1223,10 +1312,30 @@ public partial class Form1 : Form
         _tagBox.BackColor = Theme.ControlBack;
     }
 
+    private void SetTagPool(bool enabled, bool persist)
+    {
+        if (_poolSync) return;
+        _poolSync = true;
+        try
+        {
+            _settings.UseTagPool = enabled;
+            if (_poolBox.Checked != enabled) _poolBox.Checked = enabled;
+            _tagsEmbed.PoolEnabled = enabled;
+            UpdateTagBoxEnabled();
+            if (persist) SaveSettings();
+        }
+        finally
+        {
+            _poolSync = false;
+        }
+    }
+
     // ---------- Settings ----------
     private void SaveSettings()
     {
         _settings.Tag = _tagBox.Text.Trim();
+        _settings.UseTagPool = _poolBox.Checked;
+        _settings.TagOrderMode = _tagsEmbed.OrderMode;
         if (_intervalBox.SelectedIndex >= 0)
             _settings.IntervalMinutes = _intervals[_intervalBox.SelectedIndex].Minutes;
         _settings.Sorting = CurrentSorting();
