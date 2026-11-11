@@ -310,6 +310,14 @@ public partial class Form1 : Form
         UpdateScheduleLabels();
         _tagsEmbed.PoolEnabled = _settings.UseTagPool;
         _tagsEmbed.AllowNsfw = _settings.PuritySketchy;
+
+        // The pool and the schedule both choose the tag; a saved pool wins.
+        if (_settings.UseTagPool && _scheduleBox.Checked)
+        {
+            _settings.ScheduleEnabled = false;
+            _scheduleBox.Checked = false;
+        }
+        UpdatePoolScheduleLock();
         UpdateTagBoxEnabled();
 
         _generalBox.Checked = _settings.CatGeneral;
@@ -793,7 +801,7 @@ public partial class Form1 : Form
 
         // ----- right column -----
         Tips.For(_tagBox, "Search tag(s) — anything Wallhaven accepts, e.g. 'minimalist' or 'cyberpunk city'. Locked while the schedule is on.");
-        Tips.For(_poolBox, "Use the Tags tab's Included list: one tag is picked per rotation, and its Excluded tags are filtered out. The Category field above is ignored while this is on.");
+        Tips.For(_poolBox, "Use the Tags tab's Included list: one tag is picked per rotation, and its Excluded tags are filtered out. The Category field and time-of-day schedule are turned off while this is on.");
         Tips.For(_generalBox, "Include General-category wallpapers.");
         Tips.For(_animeBox, "Include Anime-category wallpapers.");
         Tips.For(_peopleBox, "Include People-category wallpapers.");
@@ -1090,7 +1098,7 @@ public partial class Form1 : Form
             bool poolActive = _settings.UseTagPool && !_scheduleBox.Checked;
             bool poolEmpty = false;
             if (_settings.UseTagPool && _scheduleBox.Checked)
-                LogService.Info("Tag pool is enabled but the time-of-day schedule is active — schedule wins.");
+                LogService.Warn("Tag pool and schedule were both on — schedule wins for this rotation.");
             if (poolActive && (_settings.PoolTags is null || _settings.PoolTags.Count == 0))
             {
                 poolActive = false;
@@ -1321,6 +1329,13 @@ public partial class Form1 : Form
             _settings.UseTagPool = enabled;
             if (_poolBox.Checked != enabled) _poolBox.Checked = enabled;
             _tagsEmbed.PoolEnabled = enabled;
+
+            // Only one tag source may be active.  Enabling the pool turns the
+            // schedule off (its slot values are kept for when it is turned on
+            // again), and the schedule switch stays disabled until then.
+            if (enabled && _scheduleBox.Checked) _scheduleBox.Checked = false;
+            UpdatePoolScheduleLock();
+
             UpdateTagBoxEnabled();
             if (persist) SaveSettings();
         }
@@ -1328,6 +1343,17 @@ public partial class Form1 : Form
         {
             _poolSync = false;
         }
+    }
+
+    private void UpdatePoolScheduleLock()
+    {
+        bool pool = _settings.UseTagPool;
+
+        _scheduleBox.Enabled = !pool;
+        _scheduleBox.TabStop = !pool;
+        Tips.For(_scheduleBox, pool
+            ? "Unavailable while \"Use multiple tags\" is on — turn the pool off to use a time-of-day schedule."
+            : "Use four different tags by time of day instead of one tag all day.");
     }
 
     // ---------- Settings ----------

@@ -8,7 +8,7 @@ A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [W
 
 - 🔄 **Auto-rotation engine** — intervals from 1 minute to 24 hours, manual "Next now", full tray control, pause anytime
 - 🎯 **Deep Wallhaven filters** — tags, categories (General/Anime/People), purity, resolution (*at least* / *exactly*), aspect ratio, color palette, 7 source orders and a sampling page cap
-- 🏷️ **Tag pools** — a dedicated Tags tab with searchable Included/Excluded lists: rotate one included tag per wallpaper (in order or shuffle-bag), always filter out excluded tags, and autocomplete from Wallhaven's live tag catalogue
+- 🏷️ **Tag pools** — a dedicated Tags tab with searchable Included/Excluded lists: drag to reorder, rotate one included tag per wallpaper (in order or shuffle-bag), always filter out excluded tags, and autocomplete from Wallhaven's live tag catalogue. The time-of-day schedule is locked while the pool is on.
 - 🌅 **Time-of-day schedule** — four tag slots (morning/afternoon/evening/night) by clock hours **or real sunrise/sunset** computed from your latitude/longitude
 - ⭐ **Favorites system** — a "favorite boost" dice (1–100%) that swaps searches for your ★ pool, plus immunity from pruning and history trimming
 - 🚫 **Blocklist** — "never show again" per wallpaper (Rotate/Cache/History tabs), with its own Blocked tab and Unblock

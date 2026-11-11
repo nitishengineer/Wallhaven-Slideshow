@@ -38,6 +38,14 @@ public class TagsForm : Form
 
     private bool _syncing;
 
+    // Drag-to-reorder state for the Included list.
+    private TagRow? _dragRow;
+    private Control? _dragSource;
+    private Cursor? _dragCursor;
+    private Point _dragStart;
+    private bool _dragging;
+    private int _dropIndex = -1;
+
     public event Action<string>? StatusChanged;
     public event Action? Changed;
     public event Action<bool>? PoolEnabledChanged;
@@ -201,6 +209,8 @@ public class TagsForm : Form
         _incFlow.Resize += (s, e) => FitRowWidths(_incFlow);
         _excFlow.Resize += (s, e) => FitRowWidths(_excFlow);
 
+        _incFlow.Paint += PaintDropLine;
+
         // A child suggestion list cannot follow scrolled rows, so hide it.
         _incFlow.Scroll += (s, e) => _incPicker.CloseSuggestions();
         _excFlow.Scroll += (s, e) => _excPicker.CloseSuggestions();
@@ -293,6 +303,15 @@ public class TagsForm : Form
             row.Down.Click += (s, e) => MoveIncluded(index, 1);
             row.Controls.Add(row.Up);
             row.Controls.Add(row.Down);
+
+            AttachDrag(row, row);
+            AttachDrag(row.NameLabel, row);
+            AttachDrag(row.IndexLabel, row);
+            var dragTip = "Drag this row to change the rotation order (or use the arrows).";
+            Tips.For(row, dragTip);
+            Tips.For(row.NameLabel, dragTip);
+            Tips.For(row.IndexLabel, dragTip);
+            row.NameLabel.Cursor = Cursors.SizeAll;
         }
 
         row.Remove = IconButton(FluentGlyph.Trash, included
@@ -321,6 +340,151 @@ public class TagsForm : Form
         button.ApplyTheme();
         Tips.For(button, tip);
         return button;
+    }
+
+    // ---------- drag to reorder ----------
+    private void AttachDrag(Control source, TagRow row)
+    {
+        source.MouseDown += (s, e) =>
+        {
+            if (e.Button != MouseButtons.Left) return;
+
+            _dragRow = row;
+            _dragSource = source;
+            _dragStart = e.Location;
+            _dragging = false;
+        };
+
+        source.MouseMove += (s, e) =>
+        {
+            if (_dragRow != row || _dragSource != source) return;
+
+            if (e.Button != MouseButtons.Left)
+            {
+                ResetDrag();
+                return;
+            }
+
+            if (!_dragging)
+            {
+                var dragSize = SystemInformation.DragSize;
+                if (Math.Abs(e.X - _dragStart.X) < dragSize.Width &&
+                    Math.Abs(e.Y - _dragStart.Y) < dragSize.Height) return;
+
+                _dragging = true;
+                source.Capture = true;
+                _dragCursor = source.Cursor;
+                source.Cursor = Cursors.SizeAll;
+            }
+
+            Point p = _incFlow.PointToClient(source.PointToScreen(e.Location));
+            AutoScrollDuringDrag(p);
+
+            if (!_incFlow.ClientRectangle.Contains(p))
+            {
+                SetDropIndex(-1);
+                return;
+            }
+
+            SetDropIndex(InsertIndexAt(p));
+        };
+
+        source.MouseUp += (s, e) =>
+        {
+            if (_dragRow != row) return;
+
+            bool wasDragging = _dragging;
+            int drop = _dropIndex;
+            string tag = row.NameLabel.Text;
+            ResetDrag();
+
+            if (!wasDragging || drop < 0) return;
+
+            int from = _settings.PoolTags.FindIndex(t => Same(t, tag));
+            if (from < 0) return;
+
+            // Removing the row shifts everything after it up by one.
+            int to = drop > from ? drop - 1 : drop;
+            MoveIncludedTo(from, to);
+        };
+
+        source.MouseCaptureChanged += (s, e) =>
+        {
+            if (source.Capture || !_dragging || _dragRow != row) return;
+            ResetDrag();
+        };
+    }
+
+    private void ResetDrag()
+    {
+        var source = _dragSource;
+        var cursor = _dragCursor;
+
+        // Clear the state first: releasing capture raises MouseCaptureChanged,
+        // which must see that no drag is active any more.
+        _dragRow = null;
+        _dragSource = null;
+        _dragCursor = null;
+        _dragging = false;
+        SetDropIndex(-1);
+
+        if (source is { IsDisposed: false })
+        {
+            source.Cursor = cursor ?? Cursors.Default;
+            if (source.Capture) source.Capture = false;
+        }
+    }
+
+    /// <summary>Where a row dropped at <paramref name="p"/> would be inserted.</summary>
+    private int InsertIndexAt(Point p)
+    {
+        var rows = _incFlow.Controls.OfType<TagRow>().ToList();
+        for (int i = 0; i < rows.Count; i++)
+        {
+            if (p.Y < rows[i].Top + rows[i].Height / 2) return i;
+        }
+        return rows.Count;
+    }
+
+    private void AutoScrollDuringDrag(Point p)
+    {
+        if (!_incFlow.VerticalScroll.Visible) return;
+
+        var scroll = _incFlow.VerticalScroll;
+        int max = Math.Max(scroll.Minimum, scroll.Maximum - scroll.LargeChange + 1);
+        int target = scroll.Value;
+
+        if (p.Y < 16) target -= 24;
+        else if (p.Y > _incFlow.ClientSize.Height - 16) target += 24;
+        else return;
+
+        target = Math.Clamp(target, scroll.Minimum, max);
+        if (target == scroll.Value) return;
+
+        scroll.Value = target;
+        _incFlow.Invalidate();
+    }
+
+    private void SetDropIndex(int index)
+    {
+        if (_dropIndex == index) return;
+        _dropIndex = index;
+        _incFlow.Invalidate();
+    }
+
+    private void PaintDropLine(object? sender, PaintEventArgs e)
+    {
+        if (_dropIndex < 0) return;
+
+        var rows = _incFlow.Controls.OfType<TagRow>().ToList();
+        int y = rows.Count == 0
+            ? 4
+            : _dropIndex >= rows.Count
+                ? rows[^1].Bottom + 2
+                : rows[_dropIndex].Top - 2;
+
+        using var pen = new Pen(Theme.Accent, 3f);
+        e.Graphics.DrawLine(pen, 4, y, Math.Max(5, _incFlow.ClientSize.Width - 4), y);
     }
 
     private void RebuildRows()
@@ -472,27 +636,27 @@ public class TagsForm : Form
         AfterChange($"Removed \"{tag}\" from Excluded.");
     }
 
-    private void MoveIncluded(int index, int delta)
+    private void MoveIncluded(int index, int delta) => MoveIncludedTo(index, index + delta);
+
+    private void MoveIncludedTo(int from, int to)
     {
         var tags = _settings.PoolTags;
-        int target = index + delta;
-        if (index < 0 || index >= tags.Count || target < 0 || target >= tags.Count) return;
+        if (from < 0 || from >= tags.Count) return;
+
+        to = Math.Clamp(to, 0, tags.Count - 1);
+        if (from == to) return;
 
         // Keep the cursor pointing at the same "next" tag even if the user
         // reorders the list while a schedule is running.
-        string? next = tags.Count > 0
-            ? tags[Math.Clamp(_settings.PoolCursor, 0, tags.Count - 1)]
-            : null;
+        string next = tags[Math.Clamp(_settings.PoolCursor, 0, tags.Count - 1)];
+        string moved = tags[from];
+        tags.RemoveAt(from);
+        tags.Insert(to, moved);
 
-        (tags[index], tags[target]) = (tags[target], tags[index]);
+        int newNext = tags.FindIndex(t => Same(t, next));
+        if (newNext >= 0) _settings.PoolCursor = newNext;
 
-        if (next is not null)
-        {
-            int newNext = tags.FindIndex(t => Same(t, next));
-            if (newNext >= 0) _settings.PoolCursor = newNext;
-        }
-
-        AfterChange($"Moved \"{tags[target]}\" to position {target + 1}.");
+        AfterChange($"Moved \"{moved}\" to position {to + 1}.");
     }
 
     private void AfterChange(string message)
@@ -544,11 +708,11 @@ public class TagsForm : Form
     private void UpdateHint()
     {
         if (_settings.ScheduleEnabled)
-            _hint.Text = "Time-of-day schedule is on — it chooses the tag, so the pool is idle.";
+            _hint.Text = "Time-of-day schedule is on — turn it off to use the tag pool.";
         else if (!_poolToggle.Checked)
             _hint.Text = "Tag pool is off — rotation uses the single Category. Excluded tags still apply.";
         else
-            _hint.Text = "One included tag is picked per rotation. Excluded tags are filtered out of every search.";
+            _hint.Text = "One included tag is picked per rotation — drag rows to reorder. Excluded tags are filtered from every search.";
     }
 
     private void UpdateSummary()
