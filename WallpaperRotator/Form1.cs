@@ -663,7 +663,7 @@ public partial class Form1 : Form
         _rotatePage.Paint += (s, e) => Theme.PaintCard(e.Graphics, _statusLabel.Bounds, 8);
 
         // ================= RIGHT COLUMN =================
-        _rotatePage.Controls.Add(Caption("Category", c2, 16));
+        _rotatePage.Controls.Add(Caption("Tag", c2, 16));
         _poolBox.Text = "Use multiple tags";
         _poolBox.Location = new Point(740, 10);
         _poolBox.AutoSize = true;
@@ -801,7 +801,7 @@ public partial class Form1 : Form
 
         // ----- right column -----
         Tips.For(_tagBox, "Search tag(s) — anything Wallhaven accepts, e.g. 'minimalist' or 'cyberpunk city'. Locked while the schedule is on.");
-        Tips.For(_poolBox, "Use the Tags tab's Included list: one tag is picked per rotation, and its Excluded tags are filtered out. The Category field and time-of-day schedule are turned off while this is on.");
+        Tips.For(_poolBox, "Use the Tags tab's Included list: one tag is picked per rotation, and its Excluded tags are filtered out. The Tag field and time-of-day schedule are turned off while this is on.");
         Tips.For(_generalBox, "Include General-category wallpapers.");
         Tips.For(_animeBox, "Include Anime-category wallpapers.");
         Tips.For(_peopleBox, "Include People-category wallpapers.");
@@ -1103,7 +1103,7 @@ public partial class Form1 : Form
             {
                 poolActive = false;
                 poolEmpty = true;
-                LogService.Warn("Tag pool is empty — falling back to the single Category.");
+                LogService.Warn("Tag pool is empty — falling back to the Tag field.");
             }
 
             try
@@ -1145,7 +1145,7 @@ public partial class Form1 : Form
                     _statusLabel.Text = $"No wallpapers for \"{tag}\" matching: {string.Join(", ", active)}. Relax a filter or pick another color.";
                     return;
                 }
-                ApplyResult(result, poolEmpty ? "  •  pool empty — Category used" : "");
+                ApplyResult(result, poolEmpty ? "  •  pool empty — Tag used" : "");
                 SaveSettings();
             }
             catch (Exception netEx) when (IsNetworkError(netEx))
@@ -1300,7 +1300,7 @@ public partial class Form1 : Form
         }
         else if (pool)
         {
-            // The pool chooses the tag now, so the single Category is ignored
+            // The pool chooses the tag now, so the single Tag is ignored
             // and shown disabled rather than hidden (the saved value stays put).
             _tagLocked = true;
             _tagBox.DropDownStyle = ComboBoxStyle.DropDown;

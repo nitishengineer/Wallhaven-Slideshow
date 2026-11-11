@@ -106,7 +106,7 @@ public class TagsForm : Form
         _poolToggle.Text = "Use multiple tags";
         _poolToggle.Location = new Point(16, 8);
         _poolToggle.AutoSize = true;
-        Tips.For(_poolToggle, "Rotate through the Included tags instead of the single Category on the Rotate tab. " +
+        Tips.For(_poolToggle, "Rotate through the Included tags instead of the Tag field on the Rotate tab. " +
                               "Excluded tags are always filtered out.");
         _topBar.Controls.Add(_poolToggle);
 
@@ -687,7 +687,7 @@ public class TagsForm : Form
         UpdateHint();
         Notify(_poolToggle.Checked
             ? "Tag pool on — rotation picks one included tag per change."
-            : "Tag pool off — rotation uses the single Category. Excluded tags still apply.");
+            : "Tag pool off — rotation uses the Tag field. Excluded tags still apply.");
         Changed?.Invoke();
         PoolEnabledChanged?.Invoke(_poolToggle.Checked);
     }
@@ -710,7 +710,7 @@ public class TagsForm : Form
         if (_settings.ScheduleEnabled)
             _hint.Text = "Time-of-day schedule is on — turn it off to use the tag pool.";
         else if (!_poolToggle.Checked)
-            _hint.Text = "Tag pool is off — rotation uses the single Category. Excluded tags still apply.";
+            _hint.Text = "Tag pool is off — rotation uses the Tag field. Excluded tags still apply.";
         else
             _hint.Text = "One included tag is picked per rotation — drag rows to reorder. Excluded tags are filtered from every search.";
     }

@@ -139,7 +139,7 @@ public class WallhavenClient
         {
             string tag = (raw ?? "").Trim().Replace("\"", "");
             if (tag.Length == 0) continue;
-            // The UI keeps the two lists disjoint, but the single Category can
+            // The UI keeps the two lists disjoint, but the single Tag can
             // still collide with an exclusion.  Ignore the contradiction rather
             // than issuing a query that is guaranteed to return nothing.
             if (tag.Equals(include, StringComparison.OrdinalIgnoreCase)) continue;

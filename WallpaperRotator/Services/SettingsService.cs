@@ -45,7 +45,7 @@ public class AppSettings
     public string SkippedVersion { get; set; } = "";
 
     // ----- Tag pool (Tags tab) -----
-    /// <summary>When on, rotation picks one tag from <see cref="PoolTags"/> per change instead of the single Category.</summary>
+    /// <summary>When on, rotation picks one tag from <see cref="PoolTags"/> per change instead of the single Tag.</summary>
     public bool UseTagPool { get; set; }
     /// <summary>Ordered list of tags to rotate through (one included tag per wallpaper fetch).</summary>
     public List<string> PoolTags { get; set; } = new();
