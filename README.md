@@ -2,7 +2,16 @@
 
 A **Wallpaper Rotator** for Windows — a C# / .NET 10 desktop app that turns [Wallhaven](https://wallhaven.cc) into an endless, smartly-filtered slideshow for your desktop. Search millions of wallpapers with deep filters, rotate on a schedule (or by real sunrise/sunset), protect favorites, block the misses, manage the cache, and give every monitor its own wallpaper — all from a Fluent (Windows 11) tray-resident app.
 
-![Screenshot](Screenshot.png)
+![Wallpaper Rotator — Rotate tab](Screenshot.png)
+
+## 🆕 What's new in 1.4.0
+
+- 🏷️ **Tags tab with tag pools** — a dedicated tab with searchable **Included** and **Excluded** lists. Rotation picks one included tag at a time (in order or shuffle-bag) and every search filters out the excluded tags. Suggestions come from Wallhaven's live tag catalogue.
+- ↕️ **Drag to reorder** — drag any Included row (background, number or name) to change the rotation order, with an accent insertion line and edge auto-scroll. The arrows still work, and the **Next** tag stays selected after a move.
+- 🔒 **Time-of-day schedule lock** — the tag pool and the schedule both choose the tag, so turning **Use multiple tags** on now switches the schedule off and disables its toggle. Turn the pool off to re-enable it; the four slot tags are kept.
+- 🏷️ **Clearer labelling** — the Rotate tab's **Category** field is now simply **Tag**, matching Wallhaven's terminology throughout the app.
+
+![Wallpaper Rotator — Tags tab](Screenshot-Tags.png)
 
 ## ✨ Features
 
@@ -106,7 +115,7 @@ What began as *"can I rotate Wallhaven wallpapers with a small script?"* grew in
 
 ## 🙌 Author
 
-**Nitish** — github.com/nitishengineer
+**Nitish** — [github.com/nitishengineer](https://github.com/nitishengineer) · Discord: `m_o_r_p`
 
 ## 📄 License
 
